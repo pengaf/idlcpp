@@ -93,26 +93,6 @@ void checkBaseTypes(ClassNode* classNode, std::vector<TypeNameNode*>& baseTypeNa
 	}
 }
 
-struct Overload
-{
-	IdentifyNode* methodName;
-	size_t parameterCount;
-	std::string manglingName;
-	bool operator < (const Overload& arg) const
-	{
-		int cmp = methodName->m_str.compare(arg.methodName->m_str);
-		if (cmp != 0)
-		{
-			return cmp < 0;
-		}
-		if (parameterCount != arg.parameterCount)
-		{
-			return parameterCount < arg.parameterCount;
-		}
-		return manglingName < arg.manglingName;
-	}
-};
-
 bool isDefaultConstructor(ClassNode* classNode, MethodNode* methodNode)
 {
 	if(classNode->m_name->m_str == methodNode->m_name->m_str)
@@ -127,11 +107,12 @@ bool isDefaultConstructor(ClassNode* classNode, MethodNode* methodNode)
 
 void checkMemberNames(ClassNode* classNode, std::vector<MemberNode*>& memberNodes, TemplateArguments* templateArguments)
 {
-	std::set<IdentifyNode*, CompareIdentifyPtr> methodNames;
-	std::set<IdentifyNode*, CompareIdentifyPtr> staticMethodNames;
-	std::set<IdentifyNode*, CompareIdentifyPtr> otherNames;
-	std::set<Overload> methods;
-	std::set<Overload> staticMethods;
+	//std::set<IdentifyNode*, CompareIdentifyPtr> methodNames;
+	//std::set<IdentifyNode*, CompareIdentifyPtr> staticMethodNames;
+	//std::set<IdentifyNode*, CompareIdentifyPtr> otherNames;
+	//std::set<Overload> methods;
+	//std::set<Overload> staticMethods;
+	std::set<IdentifyNode*, CompareIdentifyPtr> memberNames;
 
 	size_t count = memberNodes.size();
 	IdentifyNode* collisionNode = 0;
@@ -145,139 +126,53 @@ void checkMemberNames(ClassNode* classNode, std::vector<MemberNode*>& memberNode
 			//invalid operator has no name
 			continue;
 		}
-		if(snt_method == memberNode->m_nodeType || snt_operator == memberNode->m_nodeType)
+
+		auto it = memberNames.find(identify);
+		if (memberNames.end() != it)
 		{
-			MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
-			if(methodNode->m_name->m_str == classNode->m_name->m_str && !methodNode->isStatic())
-			{
-				if(0 != methodNode->m_resultTypeName)
-				{
-					char buf[4096];
-					sprintf_s(buf, "\'%s\' : constructor with return type", identify->m_str.c_str());
-					ErrorList_AddItem_CurrentFile(identify->m_lineNo,
-						identify->m_columnNo, semantic_error_constructor_with_return_type, buf);
-					continue;
-				}
-				if(0 != methodNode->m_modifier)
-				{
-					char buf[4096];
-					sprintf_s(buf, "\'%s\' : constructor cannot be declared %s", identify->m_str.c_str(), 
-						g_keywordTokens[methodNode->m_modifier->m_nodeType - snt_begin_output - 1]);
-					ErrorList_AddItem_CurrentFile(identify->m_lineNo,
-						identify->m_columnNo, semantic_error_constructor_with_modifier, buf);
-					continue;
-				}
-			}
-			else
-			{
-				if(0 == methodNode->m_resultTypeName)
-				{
-					char buf[4096];
-					sprintf_s(buf, "\'%s\' : missing type specifier", identify->m_str.c_str());
-					ErrorList_AddItem_CurrentFile(identify->m_lineNo,
-						identify->m_columnNo, semantic_error_missing_type_specifier, buf);
-					continue;
-				}
-			}
-			auto it = otherNames.find(identify);
-			if(otherNames.end() != it)
-			{
-				collisionNode = *it;
-				nameCollision = true;
-			}
-			else
-			{
-				if (methodNode->isStatic())
-				{
-					it = methodNames.find(identify);
-					if (methodNames.end() != it)
-					{
-						collisionNode = *it;
-						nameCollision = true;
-					}
-				}
-				else
-				{
-					it = staticMethodNames.find(identify);
-					if (staticMethodNames.end() != it)
-					{
-						collisionNode = *it;
-						nameCollision = true;
-					}
-				}
-				if (!nameCollision)
-				{
-					Overload overload;
-					overload.methodName = identify;
-					overload.parameterCount = methodNode->getParameterCount();
-					methodNode->calcManglingName(overload.manglingName, templateArguments);
-					if (methodNode->isStatic())
-					{
-						auto res = staticMethods.insert(overload);
-						if (!res.second)
-						{
-							collisionNode = res.first->methodName;
-							nameCollision = true;
-						}
-						else
-						{
-							staticMethodNames.insert(identify);
-						}
-					}
-					else
-					{
-						++overload.parameterCount;
-						auto res = methods.insert(overload);
-						if (!res.second)
-						{
-							collisionNode = res.first->methodName;
-							nameCollision = true;
-						}
-						else
-						{
-							methodNames.insert(identify);
-						}
-					}
-				}
-			}
+			collisionNode = *it;
+			nameCollision = true;
 		}
 		else
 		{
-			if(identify->m_str == classNode->m_name->m_str)
+			memberNames.insert(identify);
+		}
+		if (nameCollision)
+		{
+			char buf[4096];
+			sprintf_s(buf, "\'%s\' : member already defined at line %d, column %d", identify->m_str.c_str(),
+				collisionNode->m_lineNo, collisionNode->m_columnNo);
+			ErrorList_AddItem_CurrentFile(identify->m_lineNo,
+				identify->m_columnNo, semantic_error_member_redefined, buf);
+		}
+		if (identify->m_str == classNode->m_name->m_str)
+		{
+			if (snt_method != memberNode->m_nodeType)
 			{
 				char buf[4096];
 				sprintf_s(buf, "\'%s\' : class member name cannot equal to class name", identify->m_str.c_str());
 				ErrorList_AddItem_CurrentFile(identify->m_lineNo,
 					identify->m_columnNo, semantic_error_member_name_equal_to_class_name, buf);
 			}
-			auto it = otherNames.find(identify);
-			if(otherNames.end() !=  it)
-			{
-				collisionNode = *it;
-				nameCollision = true;
-			}
 			else
 			{
-				otherNames.insert(identify);
-			}	
-			if((it = methodNames.find(identify)) != methodNames.end())
-			{
-				collisionNode = *it;
-				nameCollision = true;
+				MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
+				if (0 != methodNode->m_modifier)
+				{
+					char buf[4096];
+					sprintf_s(buf, "\'%s\' : constructor cannot be declared %s", identify->m_str.c_str(),
+						g_keywordTokens[methodNode->m_modifier->m_nodeType - snt_begin_output - 1]);
+					ErrorList_AddItem_CurrentFile(identify->m_lineNo,
+						identify->m_columnNo, semantic_error_constructor_with_modifier, buf);
+				}
+				if (0 != methodNode->m_resultTypeName)
+				{
+					char buf[4096];
+					sprintf_s(buf, "\'%s\' : constructor with return type", identify->m_str.c_str());
+					ErrorList_AddItem_CurrentFile(identify->m_lineNo,
+						identify->m_columnNo, semantic_error_constructor_with_return_type, buf);
+				}
 			}
-			else if((it = staticMethodNames.find(identify)) != staticMethodNames.end())
-			{
-				collisionNode = *it;
-				nameCollision = true;
-			}
-		}
-		if(nameCollision)
-		{
-			char buf[4096];
-			sprintf_s(buf, "\'%s\' : member already defined at line %d, column %d", identify->m_str.c_str(), 
-				collisionNode->m_lineNo, collisionNode->m_columnNo);
-			ErrorList_AddItem_CurrentFile(identify->m_lineNo,
-				identify->m_columnNo, semantic_error_member_redefined, buf);
 		}
 	}
 }
@@ -444,8 +339,7 @@ void ClassNode::GenerateCreateInstanceMethod(const char* methodName, MethodNode*
 	ScopeNameNode* scopeName = (ScopeNameNode*)newScopeName(m_name, 0, 0, 0);
 	ScopeNameListNode* scopeNameList = (ScopeNameListNode*)newScopeNameList(0, scopeName);
 	TypeNameNode* typeName = (TypeNameNode*)newTypeName(scopeNameList);
-	TokenNode* passing = (TokenNode*)newToken('+');
-	setMethodResult(method, typeName, passing);
+	setMethodResult(method, typeName, tc_unique_ptr);
 	TokenNode* modifier = (TokenNode*)newToken(snt_keyword_static);
 	setMethodModifier(method, modifier);
 	//if (constructor->m_filterNode)
@@ -459,7 +353,7 @@ void ClassNode::GenerateCreateInstanceMethod(const char* methodName, MethodNode*
 void ClassNode::GenerateCreateArrayMethod(const char* methodName, MethodNode* constructor)
 {
 	IdentifyNode* name = (IdentifyNode*)newIdentify(methodName);
-	ParameterNode* parameter = (ParameterNode*)newParameter(newPrimitiveType(newToken(snt_keyword_unsigned), pt_uint), 0, 0, newIdentify("count"));
+	ParameterNode* parameter = (ParameterNode*)newParameter(newPrimitiveType(newToken(snt_keyword_unsigned), pt_uint), tc_none, newIdentify("count"));
 	ParameterListNode* parameterList = (ParameterListNode*)newParameterList(0,0,parameter);
 	MethodNode* method = (MethodNode*)newMethod(name, 
 		constructor->m_leftParenthesis, parameterList, 
@@ -469,9 +363,7 @@ void ClassNode::GenerateCreateArrayMethod(const char* methodName, MethodNode* co
 	ScopeNameNode* scopeName = (ScopeNameNode*)newScopeName(m_name, 0, 0, 0);
 	ScopeNameListNode* scopeNameList = (ScopeNameListNode*)newScopeNameList(0, scopeName);
 	TypeNameNode* typeName = (TypeNameNode*)newTypeName(scopeNameList);
-	TokenNode* passing = (TokenNode*)newToken('+');
-	setMethodResult(method, typeName, passing);
-	setMethodResultArray(method);
+	setMethodResult(method, typeName, tc_unique_array);
 	TokenNode* modifier = (TokenNode*)newToken(snt_keyword_static);
 	setMethodModifier(method, modifier);
 	//if (constructor->m_filterNode)

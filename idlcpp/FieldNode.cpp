@@ -8,32 +8,21 @@
 #include "Compiler.h"
 #include <assert.h>
 
-FieldNode::FieldNode(TypeNameNode* typeName, TokenNode* pointer, IdentifyNode* name, TokenNode* leftBracket, TokenNode* rightBracket)
+FieldNode::FieldNode(TypeNameNode* typeName, TypeCompound typeCompound, IdentifyNode* name)
 {
 	m_nodeType = snt_field;
 	m_static = 0;
-	m_constant = 0;
 	m_typeName = typeName;
-	m_pointer = pointer;
+	m_typeCompound = typeCompound;
 	m_name = name;
-	m_leftBracket = leftBracket;
-	m_rightBracket = rightBracket;
+	m_leftBracket = 0;
+	m_rightBracket = 0;
 	m_semicolon = 0;
 }
 
 bool FieldNode::isStatic()
 {
 	return (0 != m_static);
-}
-
-bool FieldNode::isConstant()
-{
-	return 0 != m_constant;
-}
-
-bool FieldNode::isPointer()
-{
-	return (0 != m_pointer);
 }
 
 bool FieldNode::isArray()
@@ -54,10 +43,6 @@ void FieldNode::checkSemantic(TemplateArguments* templateArguments)
 	{
 		return;
 	}
-	if (void_type == typeNode->getTypeCategory(templateArguments))
-	{
-		RaiseError_InvalidFieldType(this);
-	}
-	g_compiler.useType(typeNode, templateArguments, isPointer() ? tu_use_declaration : tu_use_definition, m_typeName);
+	g_compiler.useType(typeNode, templateArguments, tc_none == m_typeCompound ? tu_use_definition : tu_use_declaration, m_typeName);
 }
 

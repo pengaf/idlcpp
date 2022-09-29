@@ -24,37 +24,15 @@ DelegateNode::DelegateNode(IdentifyNode* name, TokenNode* leftParenthesis,
 {
 	m_nodeType = snt_delegate;
 	m_keyword = 0;
-	m_resultConst = 0;
 	m_resultTypeName = 0;
-	m_passing = 0;
+	m_resultTypeCompound = tc_none;
 	m_name = name;
 	m_leftParenthesis = leftParenthesis;
 	m_parameterList = parameterList;
 	m_rightParenthesis = rightParenthesis;
 	m_semicolon = semicolon;
-	m_resultArray = false;
 	m_parameterCount = size_t(-1);
 	m_classNode = 0;
-}
-
-bool DelegateNode::byValue()
-{
-	return 0 == m_passing;
-}
-
-bool DelegateNode::byRef()
-{
-	return (0 != m_passing && '&' == m_passing->m_nodeType);
-}
-
-bool DelegateNode::byPtr()
-{
-	return (0 != m_passing && '*' == m_passing->m_nodeType);
-}
-
-bool DelegateNode::byNew()
-{
-	return (0 != m_passing && '+' == m_passing->m_nodeType);
 }
 
 size_t DelegateNode::getParameterCount() const
@@ -109,14 +87,7 @@ void DelegateNode::checkSemantic(TemplateArguments* templateArguments)
 		{
 			return;
 		}
-		if (void_type == typeNode->getTypeCategory(templateArguments))
-		{
-			if (0 != m_passing && ('+' == m_passing->m_nodeType || '&' == m_passing->m_nodeType))
-			{
-				RaiseError_InvalidResultType(this);
-			}
-		}
-		g_compiler.useType(typeNode, templateArguments, byValue() ? tu_use_definition : tu_use_declaration, m_resultTypeName);
+		g_compiler.useType(typeNode, templateArguments, tc_none == m_resultTypeCompound ? tu_use_definition : tu_use_declaration, m_resultTypeName);
 	}
 
 	std::vector<ParameterNode*> parameterNodes;
@@ -150,11 +121,7 @@ void DelegateNode::extendInternalCode(TypeNode* enclosingTypeNode, TemplateArgum
 
 	IdentifyNode* invokeIdentifyNode = (IdentifyNode*)newIdentify("invoke");
 	MethodNode* invokeMethodNode = (MethodNode*)newMethod(invokeIdentifyNode, m_leftParenthesis, m_parameterList, m_rightParenthesis, NULL);
-	setMethodResult(invokeMethodNode, m_resultTypeName, m_passing);
-	if (m_resultConst)
-	{
-		setMethodResultConst(invokeMethodNode, m_resultConst);
-	}
+	setMethodResult(invokeMethodNode, m_resultTypeName, m_resultTypeCompound);
 	MemberListNode* classMemberListNode  = (MemberListNode*)newClassMemberList(0, invokeMethodNode);
 	classNode->setMemberList(0, classMemberListNode, 0);
 

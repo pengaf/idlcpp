@@ -11,7 +11,6 @@ set(HeaderFiles
     "EnumNode.h"
     "ErrorList.h"
     "FieldNode.h"
-    "GetterSetterNode.h"
     "HeaderFileGenerator.h"
     "IdentifyListNode.h"
     "IdentifyNode.h"
@@ -23,7 +22,6 @@ set(HeaderFiles
     "MetaSourceFileGenerator.h"
     "MethodNode.h"
     "NamespaceNode.h"
-    "OperatorNode.h"
     "Options.h"
     "ParameterListNode.h"
     "ParameterNode.h"
@@ -68,7 +66,6 @@ set(SourceFiles
     "EnumNode.cpp"
     "ErrorList.cpp"
     "FieldNode.cpp"
-    "GetterSetterNode.cpp"
     "HeaderFileGenerator.cpp"
     "IdentifyListNode.cpp"
     "IdentifyNode.cpp"
@@ -80,7 +77,6 @@ set(SourceFiles
     "MetaSourceFileGenerator.cpp"
     "MethodNode.cpp"
     "NamespaceNode.cpp"
-    "OperatorNode.cpp"
     "Options.cpp"
     "ParameterListNode.cpp"
     "ParameterNode.cpp"
@@ -115,9 +111,7 @@ source_group("Source Files" FILES ${SourceFiles})
 set(AllFiles
     "idlcpp.l"
     "idlcpp.y"
-    "idlcpp.l.c"
-    "idlcpp.y.c"
-    "idlcpp.y.h"
+    "idlcpp.c"
     ${HeaderFiles}
     ${SourceFiles}
 )

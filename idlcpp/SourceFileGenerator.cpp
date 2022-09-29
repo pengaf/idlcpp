@@ -30,30 +30,14 @@
 void generateCode_Token(FILE* file, TokenNode* tokenNode, int indentation);
 void generateCode_Identify(FILE* file, IdentifyNode* identifyNode, int indentation, bool addSpace = true);
 void generateCode_Parameter(FILE* file, ParameterNode* parameterNode, ScopeNode* scopeNode);
-void generateCode_TypeName(FILE* file, TypeNameNode* typeNameNode, ScopeNode* scopeNode, bool addKeyword, int indentation);
+//void generateCode_CompoundTypeName(FILE* file, TypeNameNode* typeNameNode, TypeCompound typeCompound, ScopeNode* scopeNode, bool addKeyword, int indentation);
 void generateCode_ParameterList(FILE* file, ParameterListNode* parameterListNode, ScopeNode* scopeNode);
 void writeInterfaceMethodImpl_AssignInputParam(ParameterNode* parameterNode, size_t argIndex, FILE* file, int indentation);
 void writeInterfaceMethodImpl_SetOutputParamType(ParameterNode* parameterNode, size_t argIndex, FILE* file, int indentation);
 void writeInterfaceMethodImpl_CastOutputParam(ParameterNode* parameterNode, size_t argIndex, FILE* file, int indentation);
 
-//void writeDelegateImpl_InitRes(DelegateNode* delegateNode, FILE* file, int indentation)
-//{
-//	if (0 != delegateNode->m_resultConst)
-//	{
-//		generateCode_Token(file, delegateNode->m_resultConst, indentation);
-//		generateCode_TypeName(file, delegateNode->m_resultTypeName, delegateNode->m_enclosing, true, 0);
-//	}
-//	else
-//	{
-//		generateCode_TypeName(file, delegateNode->m_resultTypeName, delegateNode->m_enclosing, true, indentation);
-//	}
-//	if (0 != delegateNode->m_passing)
-//	{
-//		generateCode_Token(file, delegateNode->m_passing, 0);
-//	}
-//	writeStringToFile(" __res__;\n", file, 0);
-//}
 
+/*
 void writeDelegateImpl_InitResult(DelegateNode* delegateNode, FILE* file, int indentation)
 {
 	char buf[4096];
@@ -166,6 +150,8 @@ void writeDelegateImpl_SetResultType(DelegateNode* delegateNode, FILE* file, int
 	}
 	writeStringToFile(buf, file, indentation);
 }
+*/
+
 
 void SourceFileGenerator::generateCode(FILE* dstFile, SourceFile* sourceFile, const char* fullPathName, const char* baseName)
 {
@@ -221,8 +207,8 @@ void SourceFileGenerator::generateCode_Namespace(FILE* file, NamespaceNode* name
 		case snt_class:
 			generateCode_Class(file, static_cast<ClassNode*>(memberNode), "", indentation + 1);
 			break;
-		case snt_delegate:
-			generateCode_Delegate(file, static_cast<DelegateNode*>(memberNode), namespaceNode, "", indentation + 1);
+		//case snt_delegate:
+		//	generateCode_Delegate(file, static_cast<DelegateNode*>(memberNode), namespaceNode, "", indentation + 1);
 			break;
 		}
 	}
@@ -346,13 +332,14 @@ void SourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, c
 		case snt_class:
 			generateCode_Class(file, static_cast<ClassNode*>(memberNode), typeName, indentation);
 			break;
-		case snt_delegate:
-			generateCode_Delegate(file, static_cast<DelegateNode*>(memberNode), classNode, typeName, indentation);
+		//case snt_delegate:
+		//	generateCode_Delegate(file, static_cast<DelegateNode*>(memberNode), classNode, typeName, indentation);
 			break;
 		}
 	}
 }
 
+/*
 void SourceFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delegateNode, ScopeNode* scopeNode, const std::string& scopeClassName, int indentation)
 {
 	char buf[4096];
@@ -482,45 +469,9 @@ void SourceFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delega
 		writeStringToFile("return __res__;\n", file, indentation + 1);
 	}
 	writeStringToFile("}\n", file, indentation);
-
-	//void EventHandler::invoke(Reference* sender)
-	//{
-	//	Variant __result__;
-	//	Variant __arguments__[1];
-	//	__arguments__[0].assignReferencePtr(sender, false, Variant::by_ptr);
-	//	Variant* __args__[2] = { 0, &__arguments__[0] };
-	//	bool __arguments_uninit__ = true;
-	//	CallBack* __callBack__ = getCallBack();
-	//	while (__callBack__)
-	//	{
-	//		int __category__ = __callBack__->getCategory();
-	//		if (__arguments_uninit__ && __category__ != CallBack::native_function)
-	//		{
-	//			__arguments_uninit__ = false;
-	//		}
-	//		CallBack* __next__ = __callBack__->getNext();
-	//		switch (__category__)
-	//		{
-	//		case CallBack::instance_method:
-	//			__callBack__->invokeInstanceMethod(&__result__, __args__, 2);
-	//			break;
-	//		case CallBack::static_method:
-	//			__callBack__->invokeInstanceMethod(&__result__, __args__, 2);
-	//			break;
-	//		case CallBack::native_function:
-	//			__res__ = (*(CallBackFunction)__callBack__->m_function)(__callBack__->m_userData, sender);
-	//			break;
-	//		}
-	//		if (0 == __next__ && __category__ != CallBack::native_function)
-	//		{
-	//			__result__.castTo...
-	//		}
-	//		__callBack__ = __next__;
-	//	}
-	//	return __res__;
-	//}
-
 }
+*/
+
 
 void SourceFileGenerator::generateCode_TemplateHeader(FILE* file, ClassNode* classNode, int indentation)
 {
@@ -570,10 +521,11 @@ void SourceFileGenerator::generateCode_AdditionalMethod(FILE* file, MethodNode* 
 		writeStringToFile(typeName.c_str(), file, indentation);
 	}
 
-	if (0 != methodNode->m_passing)
-	{
-		generateCode_Token(file, methodNode->m_passing, 0);
-	}
+	//if (0 != methodNode->m_passing)
+	//{
+	//	generateCode_Token(file, methodNode->m_passing, 0);
+	//}
+
 	writeSpaceToFile(file);
 	writeStringToFile(typeName.c_str(), file);
 	writeStringToFile("::", file);

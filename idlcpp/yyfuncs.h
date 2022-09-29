@@ -13,7 +13,6 @@ typedef struct SyntaxNode SyntaxNode;
 
 enum PredefinedType
 {
-	pt_void,
 	pt_bool,
 	pt_char,
 	pt_schar,
@@ -40,7 +39,6 @@ enum TypeCategory
 {
 	unknown_type,
 	type_not_found,
-	void_type,
 	primitive_type,
 	enum_type,
 	value_type,
@@ -50,6 +48,30 @@ enum TypeCategory
 };
 
 typedef enum TypeCategory TypeCategory;
+
+enum TypeCompound
+{
+	tc_none,
+	tc_unique_ptr,
+	tc_unique_array,
+	tc_shared_ptr,
+	tc_shared_array,
+	tc_borrowed_ptr,
+	tc_borrowed_array,
+};
+
+typedef enum TypeCompound TypeCompound;
+
+enum ParameterPassing
+{
+	pp_value,
+	pp_reference,
+	pp_const_reference,
+	pp_right_value_reference,
+	pp_const_right_value_reference,
+};
+
+typedef enum ParameterPassing ParameterPassing;
 
 enum SyntaxNodeType
 {
@@ -73,30 +95,8 @@ enum SyntaxNodeType
 
 	snt_begin_output,
 
+	snt_operator_right_reference,
 	snt_operator_scope,
-	snt_operator_add_assign,
-	snt_operator_sub_assign,
-	snt_operator_mul_assign,
-	snt_operator_div_assign,
-	snt_operator_mod_assign,
-	snt_operator_bit_xor_assign,
-	snt_operator_bit_and_assign,
-	snt_operator_bit_or_assign,
-	snt_operator_left_shift,
-	snt_operator_right_shift,
-	snt_operator_left_shift_assign,
-	snt_operator_right_shift_assign,
-	snt_operator_equal,
-	snt_operator_not_equal,
-	snt_operator_less_equal,
-	snt_operator_greater_equal,
-	snt_operator_and,
-	snt_operator_or,
-	snt_operator_inc,
-	snt_operator_dec,
-	snt_operator_post_inc,
-	snt_operator_post_dec,
-
 	snt_keyword_namespace,
 	snt_keyword_enum,
 	snt_keyword_class,
@@ -106,7 +106,6 @@ enum SyntaxNodeType
 	snt_keyword_virtual,
 	snt_keyword_static,
 	snt_keyword_const,
-	snt_keyword_operator,
 	snt_keyword_get,
 	snt_keyword_set,
 	snt_keyword_typedef,
@@ -117,7 +116,6 @@ enum SyntaxNodeType
 	snt_keyword_primitive,
 	snt_keyword_export,
 	snt_keyword_override,
-	snt_keyword_candidate,
 
 	snt_identify,
 	snt_identify_list,
@@ -133,11 +131,11 @@ enum SyntaxNodeType
 	snt_template_parameter,
 	snt_template_parameter_list,
 	snt_template_parameters,
-	snt_getter_setter,
+	snt_getter,
+	snt_setter,
 	snt_field,
 	snt_property,
 	snt_method,
-	snt_operator,
 	snt_class,
 	snt_template_class_instance,
 	snt_delegate,
@@ -153,10 +151,8 @@ enum SyntaxNodeType
 enum PropertyCategory
 {
 	simple_property,
-	fixed_array_property,
-	dynamic_array_property,
-	list_property,
-	map_property,
+	array_property,
+	collection_property,
 };
 
 typedef enum PropertyCategory PropertyCategory;
@@ -188,46 +184,34 @@ SyntaxNode* newTypeNameList(SyntaxNode* typeNameList, SyntaxNode* delimiter, Syn
 void setTypeNameFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode);
 void setMemberFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode);
 void setNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
-SyntaxNode* newField(SyntaxNode* type, SyntaxNode* pointer, SyntaxNode* name, SyntaxNode* leftBracket, SyntaxNode* rightBracket);
-void setFieldConstant(SyntaxNode* syntaxNode, SyntaxNode* constant);
+SyntaxNode* newField(SyntaxNode* type, TypeCompound typeCompound, SyntaxNode* name);
+void setFieldArray(SyntaxNode* syntaxNode, SyntaxNode* leftBracket, SyntaxNode* rightBracket);
 void setFieldStatic(SyntaxNode* syntaxNode, SyntaxNode* stat);
 void setFieldSemicolon(SyntaxNode* syntaxNode, SyntaxNode* semicolon);
 
-SyntaxNode* newGetterSetter(SyntaxNode* keyword);
-void setGetterIncRef(SyntaxNode* syntaxNode);
-void setSetterDecRef(SyntaxNode* syntaxNode);
-void setSetterAllowNull(SyntaxNode* syntaxNode);
-void setGetterSetterNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
+SyntaxNode* newGetter(SyntaxNode* keyword, TypeCompound typeCompound);
+void setGetterNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
+void setGetterPassing(SyntaxNode* syntaxNode, ParameterPassing passing);
+SyntaxNode* newSetter(SyntaxNode* keyword, TypeCompound typeCompound);
+void setSetterNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
+void setSetterPassing(SyntaxNode* syntaxNode, ParameterPassing passing);
 
-SyntaxNode* newProperty(SyntaxNode* name, PropertyCategory category);
-void setMapPropertyKeyType(SyntaxNode* property, SyntaxNode* type, SyntaxNode* passing);
-
-void setPropertyType(SyntaxNode* property, SyntaxNode* type, SyntaxNode* passing);
+SyntaxNode* newProperty(SyntaxNode* type, SyntaxNode* name, PropertyCategory category);
 void setPropertyGetter(SyntaxNode* property, SyntaxNode* getter);
 void setPropertySetter(SyntaxNode* property, SyntaxNode* setter);
-void setPropertyCandidate(SyntaxNode* property);
 void setPropertyModifier(SyntaxNode* syntaxNode, SyntaxNode* modifier);
 
-SyntaxNode* newParameter(SyntaxNode* type, SyntaxNode* passing, SyntaxNode* out, SyntaxNode* name);
-void setParameterArray(SyntaxNode* parameter);
-void setParameterConst(SyntaxNode* parameter, SyntaxNode* constant);
-void setParameterAllowNull(SyntaxNode* parameter);
+SyntaxNode* newParameter(SyntaxNode* type, TypeCompound typeCompound, SyntaxNode* name);
+void setParameterPassing(SyntaxNode* parameter, ParameterPassing passing);
+void setDefaultParameter(SyntaxNode* parameter, SyntaxNode* defaultDenote);
+
 SyntaxNode* newParameterList(SyntaxNode* parameterList, SyntaxNode* delimiter, SyntaxNode* parameter);
 
 SyntaxNode* newMethod(SyntaxNode* name, SyntaxNode* leftParenthesis, SyntaxNode* parameterList, SyntaxNode* rightParenthesis, SyntaxNode* constant);
-void setMethodResult(SyntaxNode* method, SyntaxNode* result, SyntaxNode* passing);
-void setMethodResultArray(SyntaxNode* method);
-void setMethodResultConst(SyntaxNode* method, SyntaxNode* constant);
+void setMethodResult(SyntaxNode* method, SyntaxNode* result, TypeCompound resultCompound);
 void setMethodModifier(SyntaxNode* method, SyntaxNode* modifier);
 void setMethodOverride(SyntaxNode* method);
 void setMethodSemicolon(SyntaxNode* syntaxNode, SyntaxNode* semicolon);
-
-SyntaxNode* newOperator(SyntaxNode* keyword, SyntaxNode* sign, SyntaxNode* leftParenthesis, SyntaxNode* parameterList, SyntaxNode* rightParenthesis, SyntaxNode* constant, SyntaxNode* semicolon);
-void setOperatorResult(SyntaxNode* opt, SyntaxNode* result, SyntaxNode* passing);
-void setOperatorResultArray(SyntaxNode* opt);
-void setOperatorResultConst(SyntaxNode* opt, SyntaxNode* constant);
-void setOperatorModifier(SyntaxNode* opt, SyntaxNode* modifier);
-void setOperatorOverride(SyntaxNode* opt);
 
 SyntaxNode* newClassMemberList(SyntaxNode* memberList, SyntaxNode* member);
 SyntaxNode* newClass(SyntaxNode* keyword, SyntaxNode* category, SyntaxNode* name);
@@ -239,9 +223,7 @@ void setClassTemplateParameters(SyntaxNode* cls, SyntaxNode* parameters);
 void setClassSemicolon(SyntaxNode* cls, SyntaxNode* semicolon);
 
 SyntaxNode* newDelegate(SyntaxNode* name, SyntaxNode* leftParenthesis, SyntaxNode* parameterList, SyntaxNode* rightParenthesis, SyntaxNode* semicolon);
-void setDelegateResult(SyntaxNode* delegate, SyntaxNode* result, SyntaxNode* passing);
-void setDelegateResultArray(SyntaxNode* delegate);
-void setDelegateResultConst(SyntaxNode* delegate, SyntaxNode* constant);
+void setDelegateResult(SyntaxNode* delegate, SyntaxNode* result, TypeCompound resultTypeCompound);
 void setDelegateKeyword(SyntaxNode* delegate, SyntaxNode* keyword);
 
 SyntaxNode* newTypeDeclaration(SyntaxNode* name, TypeCategory typeCategory);

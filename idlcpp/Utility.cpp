@@ -12,7 +12,7 @@ bool isNumAlpha_(char c)
 	return (('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') || '_' == c);
 }
 
-void writeStringToFile(const char* str, size_t length, FILE* file, int indentation)
+void writeIndentationsToFile(FILE* file, int indentation)
 {
 	if (file)
 	{
@@ -21,6 +21,14 @@ void writeStringToFile(const char* str, size_t length, FILE* file, int indentati
 			fwrite(g_tabs, indentation, 1, file);
 			g_lastWrittenChar = '\t';
 		}
+	}
+}
+
+void writeStringToFile(const char* str, size_t length, FILE* file, int indentation)
+{
+	if (file)
+	{
+		writeIndentationsToFile(file, indentation);
 		fwrite(str, length, 1, file);
 		if (length > 0)
 		{

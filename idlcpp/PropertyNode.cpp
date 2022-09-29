@@ -2,27 +2,39 @@
 #include "TypeNameNode.h"
 #include "TokenNode.h"
 #include "IdentifyNode.h"
-#include "GetterSetterNode.h"
 #include "ClassNode.h"
 #include "TypeTree.h"
 #include "RaiseError.h"
 #include "Compiler.h"
 #include <assert.h>
 
-PropertyNode::PropertyNode(IdentifyNode* name, PropertyCategory category)
+GetterNode::GetterNode(TokenNode* keyword, TypeCompound typeCompound)
+{
+	m_nodeType = snt_getter;
+	m_keyword = keyword;
+	m_nativeName = 0;
+	m_typeCompound = typeCompound;
+	m_passing = pp_value;
+}
+
+SetterNode::SetterNode(TokenNode* keyword, TypeCompound typeCompound)
+{
+	m_nodeType = snt_setter;
+	m_keyword = keyword;
+	m_nativeName = 0;
+	m_typeCompound = typeCompound;
+	m_passing = pp_value;
+}
+
+PropertyNode::PropertyNode(TypeNameNode* typeName, IdentifyNode* name, PropertyCategory category)
 {
 	m_nodeType = snt_property;
 	m_modifier = 0;
-	m_typeName = 0;
-	m_passing = 0;
+	m_typeName = typeName;
 	m_name = name;
 	m_get = 0;
 	m_set = 0;
 	m_propertyCategory = category;
-	m_candidate = false;
-	m_keyTypeName = 0;
-	m_keyPassing = 0;
-
 }
 
 PropertyCategory PropertyNode::getCategory()
@@ -40,80 +52,31 @@ bool PropertyNode::isSimple()
 	return simple_property == m_propertyCategory;
 }
 
-bool PropertyNode::isFixedArray()
+bool PropertyNode::isArray()
 {
-	return fixed_array_property == m_propertyCategory;
+	return array_property == m_propertyCategory;
 }
 
-bool PropertyNode::isDynamicArray()
+bool PropertyNode::isCollection()
 {
-	return dynamic_array_property == m_propertyCategory;
+	return collection_property == m_propertyCategory;
 }
 
-bool PropertyNode::isList()
-{
-	return list_property == m_propertyCategory;
-}
-
-bool PropertyNode::isMap()
-{
-	return map_property == m_propertyCategory;
-}
-
-bool PropertyNode::hasCandidate()
-{
-	return m_candidate;
-}
-
-bool PropertyNode::isKeyByPtr()
-{
-	return (0 != m_keyPassing && '*' == m_keyPassing->m_nodeType);
-}
-
-bool PropertyNode::isKeyByValue()
-{
-	return 0 == m_keyPassing;
-}
-
-bool PropertyNode::isByValue()
-{
-	return 0 == m_passing;
-}
-
-bool PropertyNode::isByPtr()
-{
-	return (0 != m_passing && '*' == m_passing->m_nodeType);
-}
-
-bool PropertyNode::isByRef()
-{
-	return (0 != m_passing && '&' == m_passing->m_nodeType);
-}
-
-void PropertyNode::setGetter(GetterSetterNode* getter)
+void PropertyNode::setGetter(GetterNode* getter)
 {
 	assert(snt_keyword_get == getter->m_keyword->m_nodeType);
 	m_get = getter;
 }
 
-void PropertyNode::setSetter(GetterSetterNode* setter)
+void PropertyNode::setSetter(SetterNode* setter)
 {
 	assert(snt_keyword_set == setter->m_keyword->m_nodeType);
 	m_set = setter;
 }
 
-void PropertyNode::setCandidate()
-{
-	m_candidate = true;
-}
-
 void PropertyNode::checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments)
 {
 	m_typeName->calcTypeNodes(enclosingTypeNode, templateArguments);
-	if (m_keyTypeName)
-	{
-		m_keyTypeName->calcTypeNodes(enclosingTypeNode, templateArguments);
-	}
 }
 
 void PropertyNode::checkSemantic(TemplateArguments* templateArguments)
@@ -127,9 +90,14 @@ void PropertyNode::checkSemantic(TemplateArguments* templateArguments)
 	{
 		return;
 	}
-	if (void_type == typeNode->getTypeCategory(templateArguments) && !isByPtr())
+	bool byValue = false;
+	if (m_set && tc_none == m_set->m_typeCompound)
 	{
-		RaiseError_InvalidPropertyType(this);
+		byValue = true;
 	}
-	g_compiler.useType(typeNode, templateArguments, isByValue() ? tu_use_definition : tu_use_declaration, m_typeName);
+	if (m_get && tc_none == m_get->m_typeCompound)
+	{
+		byValue = true;
+	}
+	g_compiler.useType(typeNode, templateArguments, byValue ? tu_use_definition : tu_use_declaration, m_typeName);
 }

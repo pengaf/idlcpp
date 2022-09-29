@@ -2,40 +2,44 @@
 
 #include "MemberNode.h"
 
-struct GetterSetterNode;
 struct TypeNameNode;
+
+struct GetterNode : SyntaxNodeImpl
+{
+	TokenNode* m_keyword;
+	IdentifyNode* m_nativeName;
+	TypeCompound m_typeCompound;
+	ParameterPassing m_passing;
+public:
+	GetterNode(TokenNode* keyword, TypeCompound typeCompound);
+};
+
+struct SetterNode : SyntaxNodeImpl
+{
+	TokenNode* m_keyword;
+	IdentifyNode* m_nativeName;
+	TypeCompound m_typeCompound;
+	ParameterPassing m_passing;
+public:
+	SetterNode(TokenNode* keyword, TypeCompound typeCompound);
+};
 
 struct PropertyNode : MemberNode
 {
 	TokenNode* m_modifier;
 	TypeNameNode* m_typeName;
-	TokenNode* m_passing;//*
-	GetterSetterNode* m_get;
-	GetterSetterNode* m_set;
+	GetterNode* m_get;
+	SetterNode* m_set;
 	PropertyCategory m_propertyCategory;
-	bool m_candidate;
-	TypeNameNode* m_keyTypeName;
-	TokenNode* m_keyPassing;//*
 public:
-	PropertyNode(IdentifyNode* name, PropertyCategory category);
+	PropertyNode(TypeNameNode* typeName, IdentifyNode* name, PropertyCategory category);
 	PropertyCategory getCategory();
 	bool isStatic();
 	bool isSimple();
-	bool isFixedArray();
-	bool isDynamicArray();
-	bool isList();
-	bool isMap();
-	bool hasCandidate();
-	bool isKeyByPtr();
-	bool isKeyByValue();
-
-	bool isByValue();
-	bool isByPtr();
-	bool isByRef();
-
-	void setGetter(GetterSetterNode* getter);
-	void setSetter(GetterSetterNode* setter);
-	void setCandidate();
+	bool isArray();
+	bool isCollection();
+	void setGetter(GetterNode* getter);
+	void setSetter(SetterNode* setter);
 
 	virtual void checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
 	virtual void checkSemantic(TemplateArguments* templateArguments);

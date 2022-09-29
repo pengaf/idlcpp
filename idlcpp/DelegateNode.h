@@ -12,21 +12,15 @@ struct DelegateNode : MemberNode
 {
 public:
 	TokenNode* m_keyword;
-	TokenNode* m_resultConst;
 	TypeNameNode* m_resultTypeName;
-	TokenNode* m_passing;//& * +
+	TypeCompound m_resultTypeCompound;
 	TokenNode* m_leftParenthesis;
 	ParameterListNode* m_parameterList;
 	TokenNode* m_rightParenthesis;
 	TokenNode* m_semicolon;
-	bool m_resultArray;
 	mutable size_t m_parameterCount;
 	ClassNode* m_classNode;
 public:
-	bool byValue();
-	bool byRef();
-	bool byPtr();
-	bool byNew();
 	DelegateNode(IdentifyNode* name, TokenNode* leftParenthesis, ParameterListNode* parameterList, TokenNode* rightParenthesis, TokenNode* semicolon);
 	size_t getParameterCount() const;
 	void extendInternalCode(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);

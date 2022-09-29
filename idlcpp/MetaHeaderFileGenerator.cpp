@@ -20,7 +20,6 @@
 #include "FieldNode.h"
 #include "PropertyNode.h"
 #include "MethodNode.h"
-#include "OperatorNode.h"
 #include "ParameterNode.h"
 #include "ParameterListNode.h"
 #include "TypeTree.h"
@@ -31,6 +30,60 @@
 #include <assert.h>
 #include <algorithm>
 
+
+std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCompound, ParameterPassing passing, ScopeNode* scopeNode)
+{
+	std::string name;
+
+	switch (typeCompound)
+	{
+	case tc_unique_ptr:
+		name = "pafcore::unique_ptr<";
+		break;
+	case tc_unique_array:
+		name = "pafcore::unique_array<";
+		break;
+	case tc_shared_ptr:
+		name = "pafcore::shared_ptr<";
+		break;
+	case tc_shared_array:
+		name = "pafcore::shared_array<";
+		break;
+	case tc_borrowed_ptr:
+		name = "pafcore::unique_ptr<";
+		break;
+	case tc_borrowed_array:
+		name = "pafcore::borrowed_array<";
+		break;
+	}
+	std::string typeName;
+	typeNameNode->getRelativeName(typeName, scopeNode);
+	name += typeName;
+	if (tc_none != typeCompound)
+	{
+		name += ">";
+	}
+
+	switch (passing)
+	{
+	case pp_value:
+		name += " ";
+		break;
+	case pp_reference:
+		name += "& ";
+		break;
+	case pp_const_reference:
+		name += " const & ";
+		break;
+	case pp_right_value_reference:
+		name += " && ";
+		break;
+	case pp_const_right_value_reference:
+		name += " const && ";
+		break;
+	}
+	return name;
+}
 
 const char g_metaMethodPrefix[] = "static ::pafcore::ErrorCode ";
 const char g_metaMethodPostfix[] = "(::pafcore::Variant* result, ::pafcore::Variant** args, int numArgs);\n";
@@ -61,62 +114,49 @@ void writeMetaMethodDecls(ClassNode* classNode, std::vector<MethodNode*> methodN
 	}
 }
 
-const char g_metaPropertyDeclPrefix[] = "static ::pafcore::ErrorCode ";
+const char* g_metaPropertyDeclPrefix = "static ::pafcore::ErrorCode ";
 
-const char g_metaPropertyDeclPostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
-const char g_metaArrayPropertyDeclPostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, size_t index, ::pafcore::Variant* value);\n";
-const char g_metaMapPropertyDeclPostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* key, ::pafcore::Variant* value);\n";
+const char* g_metaSimplePropertyGetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
+const char* g_metaSimplePropertySetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
 
-const char g_metaPropertyDeclCandidateCountPostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
-const char g_metaPropertyDeclGetCandidatePostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, size_t index, ::pafcore::Variant* value);\n";
+const char* g_metaArrayPropertyGetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, size_t index, ::pafcore::Variant* value);\n";
+const char* g_metaArrayPropertySetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, size_t index, ::pafcore::Variant* value);\n";
+const char* g_metaArrayPropertySizeDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* size);\n";
 
-const char g_metaArrayPropertyDeclSizePostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
-const char g_metaArrayPropertyDeclResizePostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
+const char* g_metaCollectionPropertyGetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Iterator* iterator, ::pafcore::Variant* value);\n";
+const char* g_metaCollectionPropertySetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Iterator* iterator, size_t replacingCount, ::pafcore::Variant* value, size_t count);\n";
+const char* g_metaCollectionPropertyIterateDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* iterator);\n";
 
-const char g_metaPropertyDeclPushBackPostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
-const char g_metaPropertyDeclGetIteratorPostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* iterator);\n";
-const char g_metaPropertyDeclGetKeyPostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Iterator* iterator, ::pafcore::Variant* key);\n";
-const char g_metaPropertyDeclGetValuePostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Iterator* iterator, ::pafcore::Variant* value);\n";
-const char g_metaPropertyDeclInsertPostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Iterator* iterator, ::pafcore::Variant* value);\n";
-const char g_metaPropertyDeclErasePostfix[] = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Iterator* iterator);\n";
 
-const char g_metaStaticPropertyDeclPostfix[] = "(::pafcore::Variant* value);\n";
-const char g_metaStaticArrayPropertyDeclPostfix[] = "(size_t index, ::pafcore::Variant* value);\n";
-const char g_metaStaticMapPropertyDeclPostfix[] = "(::pafcore::Variant* key, ::pafcore::Variant* value);\n";
+const char* g_metaStaticSimplePropertyGetDeclPostfix = "(::pafcore::Variant* value);\n";
+const char* g_metaStaticSimplePropertySetDeclPostfix = "(::pafcore::Variant* value);\n";
 
-const char g_metaStaticPropertyDeclCandidateCountPostfix[] = "(::pafcore::Variant* value);\n";
-const char g_metaStaticPropertyDeclGetCandidatePostfix[] = "(size_t index, ::pafcore::Variant* value);\n";
+const char* g_metaStaticArrayPropertyGetDeclPostfix = "(size_t index, ::pafcore::Variant* value);\n";
+const char* g_metaStaticArrayPropertySetDeclPostfix = "(size_t index, ::pafcore::Variant* value);\n";
+const char* g_metaStaticArrayPropertySizeDeclPostfix = "(::pafcore::Variant* size);\n";
 
-const char g_metaStaticArrayPropertyDeclSizePostfix[] = "(::pafcore::Variant* value);\n";
-const char g_metaStaticArrayPropertyDeclResizePostfix[] = "(::pafcore::Variant* value);\n";
-
-const char g_metaStaticPropertyDeclPushBackPostfix[] = "(::pafcore::Variant* value);\n";
-const char g_metaStaticPropertyDeclGetIteratorPostfix[] = "(::pafcore::Variant* iterator);\n";
-const char g_metaStaticPropertyDeclGetKeyPostfix[] = "(::pafcore::Iterator* iterator, ::pafcore::Variant* key);\n";
-const char g_metaStaticPropertyDeclGetValuePostfix[] = "(::pafcore::Iterator* iterator, ::pafcore::Variant* value);\n";
-const char g_metaStaticPropertyDeclInsertPostfix[] = "(::pafcore::Iterator* iterator, ::pafcore::Variant* value);\n";
-const char g_metaStaticPropertyDeclErasePostfix[] = "(::pafcore::Iterator* iterator);\n";
+const char* g_metaStaticCollectionPropertyGetDeclPostfix = "(::pafcore::Iterator* iterator, ::pafcore::Variant* value);\n";
+const char* g_metaStaticCollectionPropertySetDeclPostfix = "(::pafcore::Iterator* iterator, size_t replacingCount, ::pafcore::Variant* value, size_t count);\n";
+const char* g_metaStaticCollectionPropertyDeclIteratePostfix = "(::pafcore::Variant* iterator);\n";
 
 
 
-void writeMetaPropertyDeclGetSet(const char* funcName, bool isStatic, PropertyCategory category, FILE* file, int indentation)
+void writeMetaPropertyDeclGet(const char* funcName, bool isStatic, PropertyCategory category, FILE* file, int indentation)
 {
-	writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation);
+	writeStringToFile(g_metaPropertyDeclPrefix, file, indentation);
 	writeStringToFile(funcName, file);
 	if(isStatic)
 	{
 		switch (category)
 		{
 		case simple_property:
-			writeStringToFile(g_metaStaticPropertyDeclPostfix, sizeof(g_metaStaticPropertyDeclPostfix) - 1, file);
+			writeStringToFile(g_metaStaticSimplePropertyGetDeclPostfix, file);
 			break;
-		case fixed_array_property:
-		case dynamic_array_property:
-		case list_property:
-			writeStringToFile(g_metaStaticArrayPropertyDeclPostfix, sizeof(g_metaStaticArrayPropertyDeclPostfix) - 1, file);
+		case array_property:
+			writeStringToFile(g_metaStaticArrayPropertyGetDeclPostfix, file);
 			break;
-		case map_property:
-			writeStringToFile(g_metaStaticMapPropertyDeclPostfix, sizeof(g_metaStaticMapPropertyDeclPostfix) - 1, file);
+		case collection_property:
+			writeStringToFile(g_metaStaticCollectionPropertyGetDeclPostfix, file);
 			break;
 		}
 	}
@@ -125,15 +165,50 @@ void writeMetaPropertyDeclGetSet(const char* funcName, bool isStatic, PropertyCa
 		switch (category)
 		{
 		case simple_property:
-			writeStringToFile(g_metaPropertyDeclPostfix, sizeof(g_metaPropertyDeclPostfix) - 1, file);
+			writeStringToFile(g_metaSimplePropertyGetDeclPostfix, file);
 			break;
-		case fixed_array_property:
-		case dynamic_array_property:
-		case list_property:
-			writeStringToFile(g_metaArrayPropertyDeclPostfix, sizeof(g_metaArrayPropertyDeclPostfix) - 1, file);
+		case array_property:
+			writeStringToFile(g_metaArrayPropertyGetDeclPostfix, file);
 			break;
-		case map_property:
-			writeStringToFile(g_metaMapPropertyDeclPostfix, sizeof(g_metaMapPropertyDeclPostfix) - 1, file);
+		case collection_property:
+			writeStringToFile(g_metaCollectionPropertyGetDeclPostfix, file);
+			break;
+		}
+	}
+}
+
+
+void writeMetaPropertyDeclSet(const char* funcName, bool isStatic, PropertyCategory category, FILE* file, int indentation)
+{
+	writeStringToFile(g_metaPropertyDeclPrefix, file, indentation);
+	writeStringToFile(funcName, file);
+	if (isStatic)
+	{
+		switch (category)
+		{
+		case simple_property:
+			writeStringToFile(g_metaStaticSimplePropertySetDeclPostfix, file);
+			break;
+		case array_property:
+			writeStringToFile(g_metaStaticArrayPropertySetDeclPostfix, file);
+			break;
+		case collection_property:
+			writeStringToFile(g_metaStaticCollectionPropertySetDeclPostfix, file);
+			break;
+		}
+	}
+	else
+	{
+		switch (category)
+		{
+		case simple_property:
+			writeStringToFile(g_metaSimplePropertySetDeclPostfix, file);
+			break;
+		case array_property:
+			writeStringToFile(g_metaArrayPropertySetDeclPostfix, file);
+			break;
+		case collection_property:
+			writeStringToFile(g_metaCollectionPropertySetDeclPostfix, file);
 			break;
 		}
 	}
@@ -145,187 +220,42 @@ void writeMetaPropertyDecl(ClassNode* classNode, PropertyNode* propertyNode, FIL
 	if(0 != propertyNode->m_get)
 	{
 		sprintf_s(funcName, "%s_get_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-		writeMetaPropertyDeclGetSet(funcName, propertyNode->isStatic(), propertyNode->getCategory(), file, indentation + 1);
+		writeMetaPropertyDeclGet(funcName, propertyNode->isStatic(), propertyNode->getCategory(), file, indentation + 1);
 	}		
 	if(0 != propertyNode->m_set)
 	{
 		sprintf_s(funcName, "%s_set_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-		writeMetaPropertyDeclGetSet(funcName, propertyNode->isStatic(), propertyNode->getCategory(), file, indentation + 1);
+		writeMetaPropertyDeclSet(funcName, propertyNode->isStatic(), propertyNode->getCategory(), file, indentation + 1);
 	}
-	if (propertyNode->isSimple())
-	{
-		if (propertyNode->hasCandidate())
-		{
-			if (propertyNode->isStatic())
-			{
-				sprintf_s(funcName, "%s_candidateCount_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-				writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-				writeStringToFile(funcName, file);
-				writeStringToFile(g_metaStaticPropertyDeclCandidateCountPostfix, sizeof(g_metaStaticPropertyDeclCandidateCountPostfix) - 1, file);
-
-				sprintf_s(funcName, "%s_getCandidate_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-				writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-				writeStringToFile(funcName, file);
-				writeStringToFile(g_metaStaticPropertyDeclGetCandidatePostfix, sizeof(g_metaStaticPropertyDeclGetCandidatePostfix) - 1, file);
-			}
-			else
-			{
-				sprintf_s(funcName, "%s_candidateCount_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-				writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-				writeStringToFile(funcName, file);
-				writeStringToFile(g_metaPropertyDeclCandidateCountPostfix, sizeof(g_metaPropertyDeclCandidateCountPostfix) - 1, file);
-
-				sprintf_s(funcName, "%s_getCandidate_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-				writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-				writeStringToFile(funcName, file);
-				writeStringToFile(g_metaPropertyDeclGetCandidatePostfix, sizeof(g_metaPropertyDeclGetCandidatePostfix) - 1, file);
-			}
-		}
-	}
-	else if(propertyNode->isFixedArray() || propertyNode->isDynamicArray())
+	if(propertyNode->isArray())
 	{
 		sprintf_s(funcName, "%s_size_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-		writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
+		writeStringToFile(g_metaPropertyDeclPrefix, file, indentation + 1);
 		writeStringToFile(funcName, file);
 		if (propertyNode->isStatic())
 		{
-			writeStringToFile(g_metaStaticArrayPropertyDeclSizePostfix, sizeof(g_metaStaticArrayPropertyDeclSizePostfix) - 1, file);
+			writeStringToFile(g_metaStaticArrayPropertySizeDeclPostfix, file);
 		}
 		else
 		{
-			writeStringToFile(g_metaArrayPropertyDeclSizePostfix, sizeof(g_metaArrayPropertyDeclSizePostfix) - 1, file);
-		}
-		if (propertyNode->isDynamicArray())
-		{
-			sprintf_s(funcName, "%s_resize_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			if (propertyNode->isStatic())
-			{
-				writeStringToFile(g_metaStaticArrayPropertyDeclResizePostfix, sizeof(g_metaStaticArrayPropertyDeclResizePostfix) - 1, file);
-			}
-			else
-			{
-				writeStringToFile(g_metaArrayPropertyDeclResizePostfix, sizeof(g_metaArrayPropertyDeclResizePostfix) - 1, file);
-			}
-		}
-		if (propertyNode->isStatic())
-		{
-			sprintf_s(funcName, "%s_getIterator_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclGetIteratorPostfix, sizeof(g_metaStaticPropertyDeclGetIteratorPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getValue_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclGetValuePostfix, sizeof(g_metaStaticPropertyDeclGetValuePostfix) - 1, file);
-		}
-		else
-		{
-			sprintf_s(funcName, "%s_getIterator_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclGetIteratorPostfix, sizeof(g_metaPropertyDeclGetIteratorPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getValue_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclGetValuePostfix, sizeof(g_metaPropertyDeclGetValuePostfix) - 1, file);
+			writeStringToFile(g_metaArrayPropertySizeDeclPostfix, file);
 		}
 	}
-	else if (propertyNode->isList())
+	else if (propertyNode->isCollection())
 	{
 		if (propertyNode->isStatic())
 		{
-			sprintf_s(funcName, "%s_pushBack_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
+			sprintf_s(funcName, "%s_iterate_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
+			writeStringToFile(g_metaPropertyDeclPrefix, file, indentation + 1);
 			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclPushBackPostfix, sizeof(g_metaStaticPropertyDeclPushBackPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getIterator_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclGetIteratorPostfix, sizeof(g_metaStaticPropertyDeclGetIteratorPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getValue_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclGetValuePostfix, sizeof(g_metaStaticPropertyDeclGetValuePostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_insert_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclInsertPostfix, sizeof(g_metaStaticPropertyDeclInsertPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_erase_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclErasePostfix, sizeof(g_metaStaticPropertyDeclErasePostfix) - 1, file);
+			writeStringToFile(g_metaStaticCollectionPropertyDeclIteratePostfix, file);
 		}
 		else
 		{
-			sprintf_s(funcName, "%s_pushBack_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
+			sprintf_s(funcName, "%s_iterate_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
+			writeStringToFile(g_metaPropertyDeclPrefix, file, indentation + 1);
 			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclPushBackPostfix, sizeof(g_metaPropertyDeclPushBackPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getIterator_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclGetIteratorPostfix, sizeof(g_metaPropertyDeclGetIteratorPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getValue_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclGetValuePostfix, sizeof(g_metaPropertyDeclGetValuePostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_insert_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclInsertPostfix, sizeof(g_metaPropertyDeclInsertPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_erase_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclErasePostfix, sizeof(g_metaPropertyDeclErasePostfix) - 1, file);
-		}
-	}
-	else if (propertyNode->isMap())
-	{
-		if (propertyNode->isStatic())
-		{
-			sprintf_s(funcName, "%s_getIterator_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclGetIteratorPostfix, sizeof(g_metaStaticPropertyDeclGetIteratorPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getKey_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclGetKeyPostfix, sizeof(g_metaStaticPropertyDeclGetKeyPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getValue_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaStaticPropertyDeclGetValuePostfix, sizeof(g_metaStaticPropertyDeclGetValuePostfix) - 1, file);
-		}
-		else
-		{
-			sprintf_s(funcName, "%s_getIterator_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclGetIteratorPostfix, sizeof(g_metaPropertyDeclGetIteratorPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getKey_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclGetKeyPostfix, sizeof(g_metaPropertyDeclGetKeyPostfix) - 1, file);
-
-			sprintf_s(funcName, "%s_getValue_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
-			writeStringToFile(g_metaPropertyDeclPrefix, sizeof(g_metaPropertyDeclPrefix) - 1, file, indentation + 1);
-			writeStringToFile(funcName, file);
-			writeStringToFile(g_metaPropertyDeclGetValuePostfix, sizeof(g_metaPropertyDeclGetValuePostfix) - 1, file);
+			writeStringToFile(g_metaCollectionPropertyIterateDeclPostfix, file);
 		}
 	}
 }
@@ -557,19 +487,11 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 					continue;
 				}
 			}	
-			if (snt_operator == memberNode->m_nodeType)
-			{
-				OperatorNode* operatorNode = static_cast<OperatorNode*>(memberNode);
-				if (!std::binary_search(reservedOperators.begin(), reservedOperators.end(), operatorNode->m_sign, CompareTokenPtr()))
-				{
-					continue;
-				}
-			}
 		}
 
 		if(!memberNode->isNoMeta())
 		{
-			if(snt_method == memberNode->m_nodeType || snt_operator == memberNode->m_nodeType)
+			if(snt_method == memberNode->m_nodeType)
 			{
 				MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
 				if(memberNode->m_name->m_str != classNode->m_name->m_str)
@@ -712,33 +634,8 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 
 void writeOverrideMethodParameter(MethodNode* methodNode, ParameterNode* parameterNode, FILE* file)
 {
-	std::string typeName;
-	ClassNode* classNode = static_cast<ClassNode*>(methodNode->m_enclosing);
-	if(parameterNode->m_constant)
-	{
-		writeStringToFile("const ", file);
-	}
-	parameterNode->m_typeName->getRelativeName(typeName, methodNode->getProgramNode());
-	writeStringToFile(typeName.c_str(), file);
-
-	if (parameterNode->isByPtr())
-	{
-		writeStringToFile("*", file);
-	}
-	else if(parameterNode->isByRef())
-	{
-		writeStringToFile("&", file);
-	}
-
-	if (parameterNode->isOutputPtr())
-	{
-		writeStringToFile("*", file);
-	}
-	else if (parameterNode->isOutputRef())
-	{
-		writeStringToFile("&", file);
-	}
-
+	std::string paramName = CalcCompoundTypeName(parameterNode->m_typeName, parameterNode->m_typeCompound, parameterNode->m_passing, methodNode->getProgramNode());
+	writeStringToFile(paramName.c_str(), file);
 	writeSpaceToFile(file);
 	writeStringToFile(parameterNode->m_name->m_str.c_str(), file);
 };
@@ -746,24 +643,7 @@ void writeOverrideMethodParameter(MethodNode* methodNode, ParameterNode* paramet
 void writeInterfaceMethodDecl(MethodNode* methodNode, FILE* file, int indentation)
 {
 	char buf[4096];
-	std::string resultName;
-	if(0 != methodNode->m_resultConst)
-	{
-		resultName = "const ";
-	}
-	assert(0 != methodNode->m_resultTypeName);
-	std::string typeName;
-	methodNode->m_resultTypeName->getRelativeName(typeName, methodNode->getProgramNode());
-	resultName += typeName;
-
-	if (methodNode->byRef())
-	{
-		resultName += "&";
-	}
-	else if (methodNode->byPtr() || methodNode->byNew())
-	{
-		resultName += "*";
-	}
+	std::string resultName = CalcCompoundTypeName(methodNode->m_resultTypeName, methodNode->m_resultTypeCompound, pp_value, methodNode->getProgramNode());
 
 	sprintf_s(buf, "%s %s( ", resultName.c_str(), methodNode->m_name->m_str.c_str());
 	writeStringToFile(buf, file, indentation);

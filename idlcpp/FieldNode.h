@@ -8,18 +8,15 @@ struct TypeNameNode;
 struct FieldNode : MemberNode
 {
 	TokenNode* m_static;
-	TokenNode* m_constant;
 	TypeNameNode* m_typeName;
-	TokenNode* m_pointer;
 	TokenNode* m_leftBracket;
 	TokenNode* m_rightBracket;
 	TokenNode* m_semicolon;
+	TypeCompound m_typeCompound;
 public:
-	FieldNode(TypeNameNode* typeName, TokenNode* pointer, IdentifyNode* name, TokenNode* leftBracket, TokenNode* rightBracket);
-	bool isStatic();
-	bool isConstant();
-	bool isPointer();
+	FieldNode(TypeNameNode* typeName, TypeCompound typeCompound, IdentifyNode* name);
 	bool isArray();
+	bool isStatic();
 	virtual void checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
 	virtual void checkSemantic(TemplateArguments* templateArguments);
 };

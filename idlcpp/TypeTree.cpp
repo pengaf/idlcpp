@@ -26,9 +26,6 @@ void GetPrimitiveTypeName(std::string& typeName, PredefinedType type)
 {
 	switch (type)
 	{
-	case pt_void:
-		typeName = "void";
-		break;
 	case pt_bool:
 		typeName = "bool";
 		break;
@@ -301,7 +298,7 @@ PredefinedTypeNode::PredefinedTypeNode()
 
 TypeCategory PredefinedTypeNode::getTypeCategory(TemplateArguments* templateArguments)
 {
-	return pt_void == m_type ? void_type : primitive_type;
+	return primitive_type;
 }
 
 EnumTypeNode::EnumTypeNode()

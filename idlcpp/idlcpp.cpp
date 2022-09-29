@@ -62,9 +62,7 @@ extern "C"
 {
 extern int yylineno;
 extern int yytokenno;
-extern int yyHasArrayProperty;
-extern int yyHasListProperty;
-extern int yyHasMapProperty;
+extern int yyHasCollectionProperty;
 extern int yyHasDelegate;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE createBufferState(FILE* file);
@@ -120,10 +118,6 @@ void ParseOption(const char* arg)
 	else if (strncmp(arg + 1, "sac", 3) == 0)
 	{
 		g_options.m_strictArgumentsCount = true;
-	}
-	else if (strncmp(arg + 1, "cc", 2) == 0)
-	{
-		g_options.m_checkConstant = true;
 	}
 }
 
@@ -184,15 +178,11 @@ int _tmain(int argc, _TCHAR* argv[])
 			yyrestart(file);
 			yylineno = 1;
 			yytokenno = 0;
-			yyHasArrayProperty = 0;
-			yyHasListProperty = 0;
-			yyHasMapProperty = 0;
+			yyHasCollectionProperty = 0;
 			yyHasDelegate = 0;
 			yyparse();
 			fclose(file);
-			sourceFile->m_hasArrayProperty = (0 != yyHasArrayProperty);
-			sourceFile->m_hasListProperty = (0 != yyHasListProperty);
-			sourceFile->m_hasMapProperty = (0 != yyHasMapProperty);
+			sourceFile->m_hasCollectionProperty = (0 != yyHasCollectionProperty);
 			sourceFile->m_hasDelegate = (0 != yyHasDelegate);
 		}
 		mainSourceFile = false;
