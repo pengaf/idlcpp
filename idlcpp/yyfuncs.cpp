@@ -374,10 +374,10 @@ void setPropertyModifier(SyntaxNode* syntaxNode, SyntaxNode* modifier)
 	propertyNode->m_modifier = (TokenNode*)modifier;
 }
 
-SyntaxNode* newParameter(SyntaxNode* type, TypeCompound typeCompound, SyntaxNode* name)
+SyntaxNode* newParameter(SyntaxNode* type, TypeCompound typeCompound)
 {
-	assert(snt_type_name == type->m_nodeType && snt_identify == name->m_nodeType);
-	ParameterNode* res = new ParameterNode((TypeNameNode*) type, typeCompound, (IdentifyNode*) name);
+	assert(snt_type_name == type->m_nodeType);
+	ParameterNode* res = new ParameterNode((TypeNameNode*) type, typeCompound);
 	g_syntaxNodes.push_back(res);
 	return res;
 }
@@ -386,6 +386,12 @@ void setParameterPassing(SyntaxNode* parameter, ParameterPassing passing)
 {
 	assert(snt_parameter == parameter->m_nodeType);
 	static_cast<ParameterNode*>(parameter)->m_passing = passing;
+}
+
+void setParameterName(SyntaxNode* parameter, SyntaxNode* name)
+{
+	assert(snt_parameter == parameter->m_nodeType && snt_identify == name->m_nodeType);
+	static_cast<ParameterNode*>(parameter)->m_name = (IdentifyNode*)name;
 }
 
 void setDefaultParameter(SyntaxNode* parameter, SyntaxNode* defaultDenote)
@@ -414,6 +420,12 @@ SyntaxNode* newMethod(SyntaxNode* name, SyntaxNode* leftParenthesis, SyntaxNode*
 		(TokenNode*)rightParenthesis, (TokenNode*)constant);
 	g_syntaxNodes.push_back(res);
 	return res;
+}
+
+void setMethodVoidResult(SyntaxNode* method, SyntaxNode* voidResult)
+{
+	assert(snt_method == method->m_nodeType && snt_keyword_void == voidResult->m_nodeType);
+	((MethodNode*)method)->m_voidResult = (TokenNode*)voidResult;
 }
 
 void setMethodResult(SyntaxNode* method, SyntaxNode* result, TypeCompound resultTypeCompound)

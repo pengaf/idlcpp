@@ -33,11 +33,11 @@ struct ClassNode : ScopeNode
 	TemplateParametersNode* m_templateParametersNode;
 	ClassTypeNode* m_typeNode;
 	TemplateArguments m_templateArguments;
-	std::vector<MethodNode*> m_additionalMethods;//New NewARC NewArray
-	bool m_isValueType;
+	std::vector<MethodNode*> m_additionalMethods;
+	TypeCategory m_typeCategory;
 	bool m_override;
-	LazyBool m_abstractFlag;
-	LazyBool m_copyableFlag;
+	bool m_sharedFlag;
+	bool m_arrayFlag;
 public:
 	ClassNode(TokenNode* keyword, IdentifyListNode* conceptList, IdentifyNode* name);
 	void setTemplateParameters(TemplateParametersNode* templateParametersNode);
@@ -47,13 +47,12 @@ public:
 	bool isAbstractClass();
 	bool isCopyableClass(TemplateArguments* templateArguments);
 	bool needSubclassProxy(TemplateArguments* templateArguments);
-	bool isValueType();
 	bool hasOverrideMethod(TemplateArguments* templateArguments);
 	bool isAdditionalMethod(MethodNode* methodNode);
 	void collectOverrideMethods(std::vector<MethodNode*>& methodNodes, TemplateArguments* templateArguments);
-	void GenerateCreateInstanceMethod(const char* methodName, MethodNode* constructor);
-	void GenerateCreateArrayMethod(const char* methodName, MethodNode* constructor);
-
+	void generateCreateInstanceMethod(const char* methodName, MethodNode* constructor);
+	void generateCreateArrayMethod(const char* methodName, MethodNode* constructor);
+	TypeCategory getTypeCategory();
 	virtual TypeNode* getTypeNode();
 	virtual void getLocalName(std::string& name, TemplateArguments* templateArguments);
 	virtual void collectTypes(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);

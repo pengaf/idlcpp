@@ -18,6 +18,7 @@ MethodNode::MethodNode(IdentifyNode* name, TokenNode* leftParenthesis, Parameter
 {
 	m_nodeType = snt_method;
 	m_modifier = 0;
+	m_voidResult = 0;
 	m_resultTypeName = 0;
 	m_resultTypeCompound = tc_none;
 	m_name = name;
@@ -28,6 +29,7 @@ MethodNode::MethodNode(IdentifyNode* name, TokenNode* leftParenthesis, Parameter
 	m_semicolon = 0;
 	m_override = false;
 	m_parameterCount = size_t(-1);
+	m_firstDefaultParam = size_t(-1);
 }
 
 bool MethodNode::isStatic()
@@ -58,12 +60,33 @@ size_t MethodNode::getParameterCount() const
 	{
 		size_t res = 0;
 		ParameterListNode* list = m_parameterList;
-		while(0 != list)
+		while (0 != list)
 		{
 			++res;
 			list = list->m_parameterList;
 		}
 		m_parameterCount = res;
+	}
+	return m_parameterCount;
+}
+
+size_t MethodNode::getFirstDefaultParameter() const
+{
+	if (size_t(-1) == m_firstDefaultParam)
+	{
+		size_t paramCount = 0;
+		size_t defaultCount = 0;
+		ParameterListNode* list = m_parameterList;
+		while (nullptr != list)
+		{
+			++paramCount;
+			if (list->m_parameter->m_defaultDenote)
+			{
+				defaultCount = paramCount;
+			}
+			list = list->m_parameterList;
+		}
+		m_firstDefaultParam = paramCount - defaultCount;
 	}
 	return m_parameterCount;
 }

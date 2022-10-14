@@ -11,6 +11,7 @@ struct MethodNode : MemberNode
 {
 public:
 	TokenNode* m_modifier;//static virtual abstract
+	TokenNode* m_voidResult;
 	TypeNameNode* m_resultTypeName;
 	TypeCompound m_resultTypeCompound;
 	TokenNode* m_leftParenthesis;
@@ -20,6 +21,7 @@ public:
 	TokenNode* m_semicolon;
 	bool m_override;
 	mutable size_t m_parameterCount;
+	mutable size_t m_firstDefaultParam;
 public:
 	MethodNode(IdentifyNode* name, TokenNode* leftParenthesis, ParameterListNode* parameterList, TokenNode* rightParenthesis, TokenNode* constant);
 	bool isStatic();
@@ -28,6 +30,7 @@ public:
 	bool isConstant();
 	TypeCompound getResultTypeCompound();
 	size_t getParameterCount() const;
+	size_t getFirstDefaultParameter() const;
 	virtual void checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
 	virtual void checkSemantic(TemplateArguments* templateArguments);
 };

@@ -72,7 +72,7 @@ public:
 	void checkSemantic();
 	void useType(TypeNode* typeNode, TemplateArguments* templateArguments, TypeUsage usage, TypeNameNode* typeNameNode);
 	void useType(TypeNode* typeNode, TypeUsage usage, TypeNameNode* typeNameNode);
-	void outputUsedTypes(FILE* file, SourceFile* sourceFile);
+	void outputUsedTypes(FILE* file, SourceFile* sourceFile, const char* pafcorePath);
 	void outputUsedTypesForMetaHeader(FILE* file, SourceFile* sourceFile);
 	void outputUsedTypesForMetaSource(FILE* file, SourceFile* sourceFile);
 	bool generateCode(const char* fileName);

@@ -31,14 +31,14 @@ int yyHasDelegate = 0;
 
 "#{"						{yycolumnno += 2; BEGIN CODEBLOCK;}
 <CODEBLOCK>"#}"				{yycolumnno += 2; BEGIN INITIAL;}
-<CODEBLOCK>[^#\n]+			{newCodeBlock(yytext); yycolumnno += strlen(yytext); yytokenno++;}
+<CODEBLOCK>[^#\n]+			{newCodeBlock(yytext); yycolumnno += (int)strlen(yytext); yytokenno++;}
 <CODEBLOCK>\n				{newCodeBlock(yytext); yycolumnno = 1; yytokenno++;}
 <CODEBLOCK>.				{newCodeBlock(yytext); yycolumnno++; yytokenno++;}
 <CODEBLOCK><<EOF>>			{unterminatedCode();yyterminate();}
 
 "/*"						{yycolumnno += 2; BEGIN COMMENT;}
 <COMMENT>"*/"				{yycolumnno += 2; BEGIN INITIAL;}
-<COMMENT>[^*\n]+			{yycolumnno += strlen(yytext); }
+<COMMENT>[^*\n]+			{yycolumnno += (int)strlen(yytext); }
 <COMMENT>\n					{newCodeBlock("\n"); yycolumnno = 1; }
 <COMMENT>.					{yycolumnno++;}
 <COMMENT><<EOF>>			{unterminatedComment();yyterminate();}
@@ -49,13 +49,14 @@ int yyHasDelegate = 0;
 
 <<EOF>>				{yyterminate();}
 
-\#\#.*				{newCodeBlock(yytext + 2); yycolumnno += strlen(yytext); yytokenno++;}
+\#\#.*				{newCodeBlock(yytext + 2); yycolumnno += (int)strlen(yytext); yytokenno++;}
 
-\#[a-zA-Z_0-9]+		{newCodeBlock(yytext + 1); yycolumnno += strlen(yytext); yytokenno++;}
+\#[a-zA-Z_0-9]+		{newCodeBlock(yytext + 1); yycolumnno += (int)strlen(yytext); yytokenno++;}
 
 "*" |
-"^" |
+"+" |
 "!" |
+"^" |
 "&" |
 "=" |
 "<" |
@@ -71,51 +72,50 @@ int yyHasDelegate = 0;
 ":"	|
 "?"				{yylval.sn = newToken(yytext[0]);							yycolumnno++; yytokenno++; return yytext[0];}
 
-"&&"			{yylval.sn = newToken(snt_operator_right_reference);		yycolumnno += strlen(yytext); yytokenno++; return RIGHT_VALUE_REFERENCE;}
-"::"			{yylval.sn = newToken(snt_operator_scope);					yycolumnno += strlen(yytext); yytokenno++; return SCOPE;}
+"&&"			{yylval.sn = newToken(snt_operator_right_reference);		yycolumnno += (int)strlen(yytext); yytokenno++; return RIGHT_VALUE_REFERENCE;}
+"::"			{yylval.sn = newToken(snt_operator_scope);					yycolumnno += (int)strlen(yytext); yytokenno++; return SCOPE;}
 
-"bool"			{yylval.sn = newToken(snt_keyword_bool);					yycolumnno += strlen(yytext); yytokenno++; return BOOL;}
-"char"			{yylval.sn = newToken(snt_keyword_char);					yycolumnno += strlen(yytext); yytokenno++; return CHAR;}
-"wchar_t"		{yylval.sn = newToken(snt_keyword_wchar_t);					yycolumnno += strlen(yytext); yytokenno++; return WCHAR_T;}
-"short"			{yylval.sn = newToken(snt_keyword_short);					yycolumnno += strlen(yytext); yytokenno++; return SHORT;}
-"long"			{yylval.sn = newToken(snt_keyword_long);					yycolumnno += strlen(yytext); yytokenno++; return LONG;}
-"int"			{yylval.sn = newToken(snt_keyword_int);						yycolumnno += strlen(yytext); yytokenno++; return INT;}
-"signed"		{yylval.sn = newToken(snt_keyword_signed);					yycolumnno += strlen(yytext); yytokenno++; return SIGNED;}
-"unsigned"		{yylval.sn = newToken(snt_keyword_unsigned);				yycolumnno += strlen(yytext); yytokenno++; return UNSIGNED;}
-"float"			{yylval.sn = newToken(snt_keyword_float);					yycolumnno += strlen(yytext); yytokenno++; return FLOAT;}
-"double"		{yylval.sn = newToken(snt_keyword_double);					yycolumnno += strlen(yytext); yytokenno++; return DOUBLE;}
-"void"			{yylval.sn = newToken(snt_keyword_void);					yycolumnno += strlen(yytext); yytokenno++; return VOID;}
-"string_t"		{yylval.sn = newToken(snt_keyword_string_t);				yycolumnno += strlen(yytext); yytokenno++; return STRING_T;}
-"abstract"		{yylval.sn = newToken(snt_keyword_abstract);				yycolumnno += strlen(yytext); yytokenno++; return ABSTRACT;}
-"namespace"		{yylval.sn = newToken(snt_keyword_namespace);				yycolumnno += strlen(yytext); yytokenno++; return NAMESPACE;}
-"enum"			{yylval.sn = newToken(snt_keyword_enum);					yycolumnno += strlen(yytext); yytokenno++; return ENUM;}
-"class"			{yylval.sn = newToken(snt_keyword_class);					yycolumnno += strlen(yytext); yytokenno++; return CLASS;}
-"struct"		{yylval.sn = newToken(snt_keyword_struct);					yycolumnno += strlen(yytext); yytokenno++; return STRUCT;}
-"virtual"		{yylval.sn = newToken(snt_keyword_virtual);					yycolumnno += strlen(yytext); yytokenno++; return VIRTUAL;}
-"static"		{yylval.sn = newToken(snt_keyword_static);					yycolumnno += strlen(yytext); yytokenno++; return STATIC;}
-"const"			{yylval.sn = newToken(snt_keyword_const);					yycolumnno += strlen(yytext); yytokenno++; return CONST;}
-"typedef"		{yylval.sn = newToken(snt_keyword_typedef);					yycolumnno += strlen(yytext); yytokenno++; return TYPEDEF;}
-"primitive"		{yylval.sn = newToken(snt_keyword_primitive);				yycolumnno += strlen(yytext); yytokenno++; return PRIMITIVE;}
-"get"			{yylval.sn = newToken(snt_keyword_get);						yycolumnno += strlen(yytext); yytokenno++; return GET;}
-"set"			{yylval.sn = newToken(snt_keyword_set);						yycolumnno += strlen(yytext); yytokenno++; return SET;}
-"nocode"		{yylval.sn = newToken(snt_keyword_nocode);					yycolumnno += strlen(yytext); yytokenno++; return NOCODE;}
-"nometa"		{yylval.sn = newToken(snt_keyword_nometa);					yycolumnno += strlen(yytext); yytokenno++; return NOMETA;}
-"export"		{yylval.sn = newToken(snt_keyword_export);					yycolumnno += strlen(yytext); yytokenno++; return EXPORT;}
-"override"		{yylval.sn = newToken(snt_keyword_override);				yycolumnno += strlen(yytext); yytokenno++; return OVERRIDE;}
-"template"		{yylval.sn = newToken(snt_keyword_template);				yycolumnno += strlen(yytext); yytokenno++; return TEMPLATE;}
-"delegate"		{yylval.sn = newToken(snt_keyword_delegate);				yycolumnno += strlen(yytext); yytokenno++; return DELEGATE;}
+"bool"			{yylval.sn = newToken(snt_keyword_bool);					yycolumnno += (int)strlen(yytext); yytokenno++; return BOOL;}
+"char"			{yylval.sn = newToken(snt_keyword_char);					yycolumnno += (int)strlen(yytext); yytokenno++; return CHAR;}
+"wchar_t"		{yylval.sn = newToken(snt_keyword_wchar_t);					yycolumnno += (int)strlen(yytext); yytokenno++; return WCHAR_T;}
+"short"			{yylval.sn = newToken(snt_keyword_short);					yycolumnno += (int)strlen(yytext); yytokenno++; return SHORT;}
+"long"			{yylval.sn = newToken(snt_keyword_long);					yycolumnno += (int)strlen(yytext); yytokenno++; return LONG;}
+"int"			{yylval.sn = newToken(snt_keyword_int);						yycolumnno += (int)strlen(yytext); yytokenno++; return INT;}
+"signed"		{yylval.sn = newToken(snt_keyword_signed);					yycolumnno += (int)strlen(yytext); yytokenno++; return SIGNED;}
+"unsigned"		{yylval.sn = newToken(snt_keyword_unsigned);				yycolumnno += (int)strlen(yytext); yytokenno++; return UNSIGNED;}
+"float"			{yylval.sn = newToken(snt_keyword_float);					yycolumnno += (int)strlen(yytext); yytokenno++; return FLOAT;}
+"double"		{yylval.sn = newToken(snt_keyword_double);					yycolumnno += (int)strlen(yytext); yytokenno++; return DOUBLE;}
+"void"			{yylval.sn = newToken(snt_keyword_void);					yycolumnno += (int)strlen(yytext); yytokenno++; return VOID;}
+"abstract"		{yylval.sn = newToken(snt_keyword_abstract);				yycolumnno += (int)strlen(yytext); yytokenno++; return ABSTRACT;}
+"namespace"		{yylval.sn = newToken(snt_keyword_namespace);				yycolumnno += (int)strlen(yytext); yytokenno++; return NAMESPACE;}
+"enum"			{yylval.sn = newToken(snt_keyword_enum);					yycolumnno += (int)strlen(yytext); yytokenno++; return ENUM;}
+"class"			{yylval.sn = newToken(snt_keyword_class);					yycolumnno += (int)strlen(yytext); yytokenno++; return CLASS;}
+"struct"		{yylval.sn = newToken(snt_keyword_struct);					yycolumnno += (int)strlen(yytext); yytokenno++; return STRUCT;}
+"virtual"		{yylval.sn = newToken(snt_keyword_virtual);					yycolumnno += (int)strlen(yytext); yytokenno++; return VIRTUAL;}
+"static"		{yylval.sn = newToken(snt_keyword_static);					yycolumnno += (int)strlen(yytext); yytokenno++; return STATIC;}
+"const"			{yylval.sn = newToken(snt_keyword_const);					yycolumnno += (int)strlen(yytext); yytokenno++; return CONST;}
+"typedef"		{yylval.sn = newToken(snt_keyword_typedef);					yycolumnno += (int)strlen(yytext); yytokenno++; return TYPEDEF;}
+"typename"		{yylval.sn = newToken(snt_keyword_typename);				yycolumnno += (int)strlen(yytext); yytokenno++; return TYPENAME;}
+"get"			{yylval.sn = newToken(snt_keyword_get);						yycolumnno += (int)strlen(yytext); yytokenno++; return GET;}
+"set"			{yylval.sn = newToken(snt_keyword_set);						yycolumnno += (int)strlen(yytext); yytokenno++; return SET;}
+"nocode"		{yylval.sn = newToken(snt_keyword_nocode);					yycolumnno += (int)strlen(yytext); yytokenno++; return NOCODE;}
+"nometa"		{yylval.sn = newToken(snt_keyword_nometa);					yycolumnno += (int)strlen(yytext); yytokenno++; return NOMETA;}
+"export"		{yylval.sn = newToken(snt_keyword_export);					yycolumnno += (int)strlen(yytext); yytokenno++; return EXPORT;}
+"override"		{yylval.sn = newToken(snt_keyword_override);				yycolumnno += (int)strlen(yytext); yytokenno++; return OVERRIDE;}
+"template"		{yylval.sn = newToken(snt_keyword_template);				yycolumnno += (int)strlen(yytext); yytokenno++; return TEMPLATE;}
+"delegate"		{yylval.sn = newToken(snt_keyword_delegate);				yycolumnno += (int)strlen(yytext); yytokenno++; return DELEGATE;}
 
 
-[a-zA-Z_][a-zA-Z_0-9]*	{yylval.sn = newIdentify(yytext);					yycolumnno += strlen(yytext); yytokenno++; return IDENTIFY;}
+[a-zA-Z_][a-zA-Z_0-9]*	{yylval.sn = newIdentify(yytext);					yycolumnno += (int)strlen(yytext); yytokenno++; return IDENTIFY;}
 
-\"[^\"]*\"				{yylval.sn = newString(yytext + 1);					yycolumnno += strlen(yytext); yytokenno++; return STRING;}
-u8\"[^\"]*\"			{yylval.sn = newString(yytext + 3);					yycolumnno += strlen(yytext); yytokenno++; return U8STRING;}
+\"[^\"]*\"				{yylval.sn = newString(yytext + 1);					yycolumnno += (int)strlen(yytext); yytokenno++; return STRING;}
+u8\"[^\"]*\"			{yylval.sn = newString(yytext + 3);					yycolumnno += (int)strlen(yytext); yytokenno++; return U8STRING;}
 
 [ \t]							{++yycolumnno;}
 "\n"							{newCodeBlock(yytext); yycolumnno = 1;}
 
-[^ ,;:{}\[\]<>()&*^$"/+%^|!~=?\-\t\n]*		{invalidString(yytext); yycolumnno += strlen(yytext);}
-.								{invalidString(yytext); yycolumnno += strlen(yytext);}
+[^ ,;:{}\[\]<>()&*^$"/+%^|!~=?\-\t\n]*		{invalidString(yytext); yycolumnno += (int)strlen(yytext);}
+.								{invalidString(yytext); yycolumnno += (int)strlen(yytext);}
 
 %%
 

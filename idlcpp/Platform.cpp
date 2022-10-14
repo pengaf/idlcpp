@@ -81,5 +81,5 @@ void FormatPathForLine(std::string& str)
 
 bool compareFileName(const std::string& str1, const std::string& str2)
 {
-	return stricmp(str1.c_str(), str2.c_str()) < 0;
+	return _stricmp(str1.c_str(), str2.c_str()) < 0;
 }

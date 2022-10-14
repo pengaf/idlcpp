@@ -245,15 +245,20 @@ void Compiler::useType(TypeNode* typeNode, TypeUsage usage, TypeNameNode* typeNa
 	}
 }
 
-void Compiler::outputUsedTypes(FILE* file, SourceFile* sourceFile)
+void Compiler::outputUsedTypes(FILE* file, SourceFile* sourceFile, const char* pafcorePath)
 {
 	char buf[4096];
 	std::vector<SourceFile*> sourceFiles;
 	std::vector<TypeNode*> typeNodes;
 	auto begin = m_usedTypes.begin();
 	auto end = m_usedTypes.end();
+	bool useSmartPtr = false;
 	for (auto it = begin; it != end; ++it)
 	{
+		if (it->usage & tu_use_declaration)
+		{
+			useSmartPtr = true;
+		}
 		TypeNode* typeNode = it->typeNode;
 		if (typeNode->isTypeDeclaration())
 		{
@@ -306,6 +311,13 @@ void Compiler::outputUsedTypes(FILE* file, SourceFile* sourceFile)
 		FormatPathForInclude(fileName);
 		writeStringToFile(fileName.c_str(), fileName.length(), file);
 		writeStringToFile("\"\n", file);
+	}
+
+	if (useSmartPtr)
+	{
+		writeStringToFile("#include \"", file);
+		writeStringToFile(pafcorePath, file);
+		writeStringToFile("SmartPtr.h\"\n", file);
 	}
 
 	auto begin3 = typeNodes.begin();
@@ -498,7 +510,7 @@ bool Compiler::generateHeaderFile(const char* fileName)
 	if (0 != file)
 	{
 		writeStringToFile(g_strHeader, sizeof(g_strHeader) - 1, file);
-		HeaderFileGenerator::generateCode(file, m_mainSourceFile);
+		HeaderFileGenerator::generateCode(file, m_mainSourceFile, fileName);
 		fclose(file);
 		return true;
 	}

@@ -8,11 +8,11 @@
 #include "Compiler.h"
 #include <assert.h>
 
-ParameterNode::ParameterNode(TypeNameNode* typeName, TypeCompound typeCompound, IdentifyNode* name)
+ParameterNode::ParameterNode(TypeNameNode* typeName, TypeCompound typeCompound)
 {
 	m_nodeType = snt_parameter;
 	m_typeName = typeName;
-	m_name = name;
+	m_name = nullptr;
 	m_typeCompound = typeCompound;
 	m_passing = pp_value;
 	m_defaultDenote = nullptr;

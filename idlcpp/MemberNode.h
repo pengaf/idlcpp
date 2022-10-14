@@ -34,7 +34,7 @@ struct MemberNode : SyntaxNodeImpl
 	ScopeNode* m_enclosing;
 	TokenNode* m_filterNode;
 	IdentifyNode* m_nativeName;
-	int m_orderIndex;//for field & property syntax order
+	size_t m_orderIndex;//for field & property syntax order
 public:
 	MemberNode();
 	bool isNoCode();

@@ -86,10 +86,10 @@ void writeDelegateImpl_CastResult(DelegateNode* delegateNode, FILE* file, int in
 		case enum_type:
 			sprintf_s(buf, "__result__.castToEnum(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &__res__);\n", typeName.c_str());
 			break;
-		case value_type:
+		case object_type:
 			sprintf_s(buf, "__result__.castToValue(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &__res__);\n", typeName.c_str());
 			break;
-		case reference_type:
+		case introspectable_type:
 			sprintf_s(buf, "__result__.castToReference(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &__res__);\n", typeName.c_str());
 			break;
 		default:
@@ -110,10 +110,10 @@ void writeDelegateImpl_CastResult(DelegateNode* delegateNode, FILE* file, int in
 		case enum_type:
 			sprintf_s(buf, "__result__.castToEnumPtr(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), (void**)&__res__);\n", typeName.c_str());
 			break;
-		case value_type:
+		case object_type:
 			sprintf_s(buf, "__result__.castToValuePtr(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), (void**)&__res__);\n", typeName.c_str());
 			break;
-		case reference_type:
+		case introspectable_type:
 			sprintf_s(buf, "__result__.castToReferencePtr(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), (void**)&__res__);\n", typeName.c_str());
 			break;
 		default:
@@ -173,8 +173,8 @@ void SourceFileGenerator::generateCode_Program(FILE* file, ProgramNode* programN
 	sprintf_s(buf, "#include \"%s%s\"\n", cppName, g_options.m_metaHeaderFilePostfix.c_str());
 	writeStringToFile(buf, file);
 
-	sprintf_s(buf, "#include \"%sRefCountImpl.h\"\n\n", pafcorePath.c_str());
-	writeStringToFile(buf, file);
+	//sprintf_s(buf, "#include \"%sRefCountImpl.h\"\n\n", pafcorePath.c_str());
+	//writeStringToFile(buf, file);
 
 	generateCode_Namespace(file, programNode, -1);
 }
@@ -271,7 +271,7 @@ void SourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, c
 		writeStringToFile(">::RuntimeType::GetSingleton();\n", file);
 		writeStringToFile("}\n\n", file, indentation);
 
-		if (!classNode->isValueType())
+		//if (classNode->isIntrospectable())
 		{
 			generateCode_TemplateHeader(file, classNode, indentation);
 			if (isInline)
@@ -293,16 +293,16 @@ void SourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, c
 			generateCode_TemplateHeader(file, classNode, indentation);
 			if (isInline)
 			{
-				writeStringToFile("inline size_t ", file, indentation);
+				writeStringToFile("inline void* ", file, indentation);
 			}
 			else
 			{
-				writeStringToFile("size_t ", file, indentation);
+				writeStringToFile("void* ", file, indentation);
 			}
 			writeStringToFile(typeName.c_str(), file);
 			writeStringToFile("::getAddress()\n", file);
 			writeStringToFile("{\n", file, indentation);
-			writeStringToFile("return (size_t)this;\n", file, indentation + 1);
+			writeStringToFile("return this;\n", file, indentation + 1);
 			writeStringToFile("}\n\n", file, indentation);
 		}
 	}
@@ -385,17 +385,17 @@ void SourceFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delega
 		writeDelegateImpl_InitResult(delegateNode, file, indentation + 1);
 	}
 	
-	writeStringToFile("pafcore::Variant __result__;\n", file, indentation + 1);
+	writeStringToFile("::pafcore::Variant __result__;\n", file, indentation + 1);
 	if (0 < paramCount)
 	{
-		sprintf_s(buf, "::pafcore::Variant __arguments__[%d];\n", paramCount);
+		sprintf_s(buf, "::pafcore::Variant __arguments__[%zd];\n", paramCount);
 		writeStringToFile(buf, file, indentation + 1);
 	}
-	sprintf_s(buf, "::pafcore::Variant* __args__[%d] = {0", paramCount + 1);
+	sprintf_s(buf, "::pafcore::Variant* __args__[%zd] = {0", paramCount + 1);
 	writeStringToFile(buf, file, indentation + 1);
 	for (size_t i = 0; i < paramCount; ++i)
 	{
-		sprintf_s(buf, ", &__arguments__[%d]", i);
+		sprintf_s(buf, ", &__arguments__[%zd]", i);
 		writeStringToFile(buf, file, 0);
 	}
 	writeStringToFile("};\n", file, 0);
@@ -497,7 +497,7 @@ void SourceFileGenerator::generateCode_TemplateHeader(FILE* file, ClassNode* cla
 
 void SourceFileGenerator::generateCode_AdditionalMethod(FILE* file, MethodNode* methodNode, const std::string& typeName, int indentation)
 {
-	char buf[4096];
+	char wrappedTypeName[4096];
 
 	if (methodNode->isNoCode())
 	{
@@ -505,20 +505,41 @@ void SourceFileGenerator::generateCode_AdditionalMethod(FILE* file, MethodNode* 
 	}
 
 	ClassNode* classNode = static_cast<ClassNode*>(methodNode->m_enclosing);
-	//std::string typeName;
-	//GetClassName(typeName, classNode);
-	bool isInline = 0 != classNode->m_templateParametersNode;
+	if ("New" == methodNode->m_name->m_str)
+	{
+		if (classNode->m_sharedFlag)
+		{
+			sprintf_s(wrappedTypeName, "::pafcore::SharedPtr<%s>", typeName.c_str());
+		}
+		else
+		{
+			sprintf_s(wrappedTypeName, "::pafcore::UniquePtr<%s>", typeName.c_str());
+		}
+	}
+	else
+	{
+		assert("NewArray" == methodNode->m_name->m_str);
+		if (classNode->m_sharedFlag)
+		{
+			sprintf_s(wrappedTypeName, "::pafcore::SharedArray<%s>", typeName.c_str());
+		}
+		else
+		{
+			sprintf_s(wrappedTypeName, "::pafcore::UniqueArray<%s>", typeName.c_str());
+		}
+	}
 
+	bool isInline = 0 != classNode->m_templateParametersNode;
 	generateCode_TemplateHeader(file, classNode, indentation);
 
 	if (isInline)
 	{
 		writeStringToFile("inline ", file, indentation);
-		writeStringToFile(typeName.c_str(), file);
+		writeStringToFile(wrappedTypeName, file);
 	}
 	else
 	{
-		writeStringToFile(typeName.c_str(), file, indentation);
+		writeStringToFile(wrappedTypeName, file, indentation);
 	}
 
 	//if (0 != methodNode->m_passing)
@@ -549,36 +570,9 @@ void SourceFileGenerator::generateCode_AdditionalMethod(FILE* file, MethodNode* 
 	writeStringToFile("\n", file);
 	writeStringToFile("{\n", file, indentation);
 
-	if ("New" == methodNode->m_name->m_str)
-	{
-		if (classNode->isValueType())
-		{
-			sprintf_s(buf, "return paf_new %s(", typeName.c_str());
-		}
-		else
-		{
-			if (classNode->m_category && classNode->m_category->m_str == "atomic_reference_object")
-			{
-				sprintf_s(buf, "return paf_new ::pafcore::AtomicRefCountImpl<%s>(", typeName.c_str());
-			}
-			else
-			{
-				sprintf_s(buf, "return paf_new ::pafcore::RefCountImpl<%s>(", typeName.c_str());
-			}
-		}
-	}
-	//else if ("NewARC" == methodNode->m_name->m_str)
-	//{
-	//	sprintf_s(buf, "return paf_new ::pafcore::AtomicRefCountImpl<%s>(", typeName.c_str());
-	//}
-	else
-	{
-		assert("NewArray" == methodNode->m_name->m_str);
-		assert(classNode->isValueType());
-		sprintf_s(buf, "return paf_new_array<%s>(", typeName.c_str());
-	}
-
-	writeStringToFile(buf, file, indentation + 1);
+	writeStringToFile("return ", file, indentation + 1);
+	writeStringToFile(wrappedTypeName, file);
+	writeStringToFile("::Make(", file);
 	for (size_t i = 0; i < parameterCount; ++i)
 	{
 		if (i != 0)

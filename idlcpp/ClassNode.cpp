@@ -30,74 +30,12 @@
 #include <map>
 #include <algorithm>
 
-const char g_strPublic[] = {"public "};
-
-void checkBaseTypes(ClassNode* classNode, std::vector<TypeNameNode*>& baseTypeNameNodes, std::vector<TypeNode*>& baseTypeNodes, TemplateArguments* templateArguments)
-{
-	assert(baseTypeNameNodes.size() == baseTypeNodes.size());
-	size_t count = baseTypeNameNodes.size();
-	for(size_t i = 0; i < count; ++i)
-	{
-		TypeNameNode* typeNameNode = baseTypeNameNodes[i];
-		TypeNode* typeNode = baseTypeNodes[i];
-		if (0 == typeNode)
-		{
-			continue;
-		}
-		TypeCategory baseTypeCategory = typeNode->getTypeCategory(templateArguments);
-		if(classNode->isValueType())
-		{
-			if (value_type != baseTypeCategory)
-			{
-				char buf[4096];
-				sprintf_s(buf, "\'%s\' : base type must be value type", typeNameNode->m_scopeNameList->m_scopeName->m_name->m_str.c_str());
-				ErrorList_AddItem_CurrentFile(typeNameNode->m_scopeNameList->m_scopeName->m_name->m_lineNo,
-					typeNameNode->m_scopeNameList->m_scopeName->m_name->m_columnNo, semantic_error_base_type, buf);
-			}
-		}
-		else
-		{
-			if (0 == i)
-			{
-				if (reference_type != baseTypeCategory)
-				{
-					char buf[4096];
-					sprintf_s(buf, "\'%s\' : first base type must be reference type", typeNameNode->m_scopeNameList->m_scopeName->m_name->m_str.c_str());
-					ErrorList_AddItem_CurrentFile(typeNameNode->m_scopeNameList->m_scopeName->m_name->m_lineNo,
-						typeNameNode->m_scopeNameList->m_scopeName->m_name->m_columnNo, semantic_error_base_type, buf);
-				}
-			}
-			else
-			{
-				if (reference_type != baseTypeCategory && value_type != baseTypeCategory)
-				{
-					char buf[4096];
-					sprintf_s(buf, "\'%s\' : base type must be reference type or value type", typeNameNode->m_scopeNameList->m_scopeName->m_name->m_str.c_str());
-					ErrorList_AddItem_CurrentFile(typeNameNode->m_scopeNameList->m_scopeName->m_name->m_lineNo,
-						typeNameNode->m_scopeNameList->m_scopeName->m_name->m_columnNo, semantic_error_base_type, buf);
-				}
-			}
-		}
-		auto it = std::find(baseTypeNodes.begin(), baseTypeNodes.begin() + i, typeNode);
-		if(it != baseTypeNodes.begin() + i)
-		{
-			size_t index = it - baseTypeNodes.begin();
-			char buf[4096];
-			sprintf_s(buf, "\'%s\' : is already a direct base class, the previous declaration is at line %d, column %d", 
-				typeNameNode->m_scopeNameList->m_scopeName->m_name->m_str.c_str(),
-				baseTypeNameNodes[index]->m_scopeNameList->m_scopeName->m_name->m_lineNo,
-				baseTypeNameNodes[index]->m_scopeNameList->m_scopeName->m_name->m_columnNo);
-			ErrorList_AddItem_CurrentFile(typeNameNode->m_scopeNameList->m_scopeName->m_name->m_lineNo,
-				typeNameNode->m_scopeNameList->m_scopeName->m_name->m_columnNo, semantic_error_base_redeclared, buf);
-		}
-	}
-}
 
 bool isDefaultConstructor(ClassNode* classNode, MethodNode* methodNode)
 {
 	if(classNode->m_name->m_str == methodNode->m_name->m_str)
 	{
-		if(0 == methodNode->getParameterCount())
+		if(0 == methodNode->getFirstDefaultParameter())
 		{
 			return true;
 		}
@@ -107,11 +45,6 @@ bool isDefaultConstructor(ClassNode* classNode, MethodNode* methodNode)
 
 void checkMemberNames(ClassNode* classNode, std::vector<MemberNode*>& memberNodes, TemplateArguments* templateArguments)
 {
-	//std::set<IdentifyNode*, CompareIdentifyPtr> methodNames;
-	//std::set<IdentifyNode*, CompareIdentifyPtr> staticMethodNames;
-	//std::set<IdentifyNode*, CompareIdentifyPtr> otherNames;
-	//std::set<Overload> methods;
-	//std::set<Overload> staticMethods;
 	std::set<IdentifyNode*, CompareIdentifyPtr> memberNames;
 
 	size_t count = memberNodes.size();
@@ -179,17 +112,17 @@ void checkMemberNames(ClassNode* classNode, std::vector<MemberNode*>& memberNode
 
 static void ParseConceptList(
 	IdentifyNode*& categoryNode,
-	ClassNode::LazyBool& copyableFlag,
+	bool& sharedFlag,
+	bool& arrayFlag,
 	IdentifyListNode* conceptList)
 {
 	const char* s_categorys[] =
 	{
-		"void_object",
-		"primitive_object",
-		"enum_object",
-		"value_object",
-		"reference_object",
-		"atomic_reference_object",
+		"primitive",
+		"enumeration",
+		"object",
+		"string",
+		"buffer",
 		"enumerator",
 		"instance_field",
 		"static_field",
@@ -199,10 +132,9 @@ static void ParseConceptList(
 		"static_method",
 		"function_argument",
 		"function_result",
-		"void_type",
 		"primitive_type",
-		"enum_type",
-		"class_type",
+		"enumeration_type",
+		"object_type",
 		"type_alias",
 		"name_space",
 	};
@@ -211,13 +143,13 @@ static void ParseConceptList(
 	conceptList->collectIdentifyNodes(identifyNodes);
 	for (IdentifyNode* identifyNode : identifyNodes)
 	{
-		if (identifyNode->m_str == "copyable")
+		if (identifyNode->m_str == "shared")
 		{
-			copyableFlag = ClassNode::lb_true;
+			sharedFlag = true;
 		}
-		else if (identifyNode->m_str == "noncopyable")
+		else if (identifyNode->m_str == "array")
 		{
-			copyableFlag = ClassNode::lb_false;
+			arrayFlag = true;
 		}
 		else if (0 == categoryNode)
 		{
@@ -254,19 +186,25 @@ ClassNode::ClassNode(TokenNode* keyword, IdentifyListNode* conceptList, Identify
 	m_templateParametersNode = 0;
 	m_typeNode = 0;
 	m_category = 0;
-	m_copyableFlag = lb_unknown;
 
-	ParseConceptList(m_category, m_copyableFlag, conceptList);
-	if(0 == m_category)
-	{
-		m_isValueType = (snt_keyword_struct == keyword->m_nodeType || snt_keyword_delegate == keyword->m_nodeType);
-	}
-	else
-	{
-		m_isValueType = (m_category->m_str == "value_object");
-	}
+	m_sharedFlag = false;
+	m_arrayFlag = false;
+
+	ParseConceptList(m_category, m_sharedFlag, m_arrayFlag, conceptList);
 	m_override = false;
-	m_abstractFlag = lb_unknown;
+
+	m_typeCategory = object_type;
+	if(0 != m_category)
+	{
+		if (m_category->m_str == "string")
+		{
+			m_typeCategory = string_type;
+		}
+		else if (m_category->m_str == "buffer")
+		{
+			m_typeCategory = buffer_type;
+		}
+	}	
 }
 
 void ClassNode::setTemplateParameters(TemplateParametersNode* templateParametersNode)
@@ -292,19 +230,7 @@ void ClassNode::extendInternalCode(TypeNode* enclosingTypeNode, TemplateArgument
 		templateArguments = &m_templateArguments;
 	}
 
-	if(!isAbstractClass())
-	{
-		//New NewArray
-		buildAdditionalMethods();
-	}
-
-	//size_t count = m_additionalMethods.size();
-	//for (size_t i = 0; i < count; ++i)
-	//{
-	//	MethodNode* methodNode = m_additionalMethods[i];
-	//	assert(methodNode->m_resultTypeName);
-	//	methodNode->m_resultTypeName->calcTypeNodes(m_typeNode, templateArguments);
-	//}
+	buildAdditionalMethods();
 
 	std::vector<MemberNode*> memberNodes;
 	m_memberList->collectMemberNodes(memberNodes);
@@ -329,7 +255,7 @@ extern "C" extern int yytokenno;
 extern "C" extern int yylineno;
 extern "C" extern int yycolumnno;
 
-void ClassNode::GenerateCreateInstanceMethod(const char* methodName, MethodNode* constructor)
+void ClassNode::generateCreateInstanceMethod(const char* methodName, MethodNode* constructor)
 {
 	IdentifyNode* name = (IdentifyNode*)newIdentify(methodName);
 	MethodNode* method = (MethodNode*)newMethod(name, 
@@ -339,7 +265,8 @@ void ClassNode::GenerateCreateInstanceMethod(const char* methodName, MethodNode*
 	ScopeNameNode* scopeName = (ScopeNameNode*)newScopeName(m_name, 0, 0, 0);
 	ScopeNameListNode* scopeNameList = (ScopeNameListNode*)newScopeNameList(0, scopeName);
 	TypeNameNode* typeName = (TypeNameNode*)newTypeName(scopeNameList);
-	setMethodResult(method, typeName, tc_unique_ptr);
+
+	setMethodResult(method, typeName, m_sharedFlag ? tc_shared_ptr : tc_unique_ptr);
 	TokenNode* modifier = (TokenNode*)newToken(snt_keyword_static);
 	setMethodModifier(method, modifier);
 	//if (constructor->m_filterNode)
@@ -350,10 +277,11 @@ void ClassNode::GenerateCreateInstanceMethod(const char* methodName, MethodNode*
 	m_additionalMethods.push_back(method);
 }
 
-void ClassNode::GenerateCreateArrayMethod(const char* methodName, MethodNode* constructor)
+void ClassNode::generateCreateArrayMethod(const char* methodName, MethodNode* constructor)
 {
 	IdentifyNode* name = (IdentifyNode*)newIdentify(methodName);
-	ParameterNode* parameter = (ParameterNode*)newParameter(newPrimitiveType(newToken(snt_keyword_unsigned), pt_uint), tc_none, newIdentify("count"));
+	ParameterNode* parameter = (ParameterNode*)newParameter(newPrimitiveType(newToken(snt_keyword_unsigned), pt_uint), tc_none);
+	setParameterName(parameter, newIdentify("count"));
 	ParameterListNode* parameterList = (ParameterListNode*)newParameterList(0,0,parameter);
 	MethodNode* method = (MethodNode*)newMethod(name, 
 		constructor->m_leftParenthesis, parameterList, 
@@ -363,7 +291,7 @@ void ClassNode::GenerateCreateArrayMethod(const char* methodName, MethodNode* co
 	ScopeNameNode* scopeName = (ScopeNameNode*)newScopeName(m_name, 0, 0, 0);
 	ScopeNameListNode* scopeNameList = (ScopeNameListNode*)newScopeNameList(0, scopeName);
 	TypeNameNode* typeName = (TypeNameNode*)newTypeName(scopeNameList);
-	setMethodResult(method, typeName, tc_unique_array);
+	setMethodResult(method, typeName, m_sharedFlag ? tc_shared_array : tc_unique_array);
 	TokenNode* modifier = (TokenNode*)newToken(snt_keyword_static);
 	setMethodModifier(method, modifier);
 	//if (constructor->m_filterNode)
@@ -383,8 +311,8 @@ void ClassNode::buildAdditionalMethods()
 	yylineno = 0;
 	yycolumnno = 0;
 
-	MethodNode* defaultConstructor = 0;
-	std::vector<MethodNode*> constructors;	
+	MethodNode* constructor = nullptr;
+	bool defaultConstructor = false;
 	std::vector<MemberNode*> memberNodes;
 	m_memberList->collectMemberNodes(memberNodes);
 	size_t memberCount = memberNodes.size();
@@ -396,106 +324,41 @@ void ClassNode::buildAdditionalMethods()
 			MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
 			if(memberNode->m_name->m_str == m_name->m_str)
 			{
-				if(isDefaultConstructor(this, methodNode))
-				{
-					assert(0 == defaultConstructor);
-					defaultConstructor = methodNode;
-				}
-				constructors.push_back(methodNode);
+				constructor = methodNode;
+				defaultConstructor = isDefaultConstructor(this, methodNode);
+				break;
 			}
 		}
 	}
 
-	size_t count = constructors.size();
-	for(size_t i = 0; i < count; ++i)
+	if (constructor)
 	{
-		MethodNode* constructor = constructors[i];
-		GenerateCreateInstanceMethod("New", constructor);
-		//if(!isValueType())
-		//{
-		//	GenerateCreateInstanceMethod("NewARC", constructor);
-		//}
+		generateCreateInstanceMethod("New", constructor);
+		bool isStruct = (snt_keyword_struct == m_keyword->m_nodeType);
+		if (defaultConstructor && (m_arrayFlag || isStruct))
+		{
+			generateCreateArrayMethod("NewArray", constructor);
+		}
 	}
-	if(0 != defaultConstructor && isValueType())
-	{
-		GenerateCreateArrayMethod("NewArray", defaultConstructor);
-	}
+
+	//size_t count = constructors.size();
+	//for(size_t i = 0; i < count; ++i)
+	//{
+	//	MethodNode* constructor = constructors[i];
+	//	//if(!isValueType())
+	//	//{
+	//	//	GenerateCreateInstanceMethod("NewARC", constructor);
+	//	//}
+	//}
+	//if(0 != defaultConstructor && !isIntrospectable())
+	//{
+	//	GenerateCreateArrayMethod("NewArray", defaultConstructor);
+	//}
 	yytokenno = backupToken;
 	yylineno = backupLine;
 	yycolumnno = backupColumn;
 }
 
-bool ClassNode::isValueType()
-{
-	return m_isValueType;
-}
-
-bool ClassNode::isAbstractClass()
-{
-	if(lb_unknown == m_abstractFlag)
-	{
-		if(m_modifier)
-		{
-			m_abstractFlag = lb_true;
-			return true;
-		}
-		std::vector<MemberNode*> memberNodes;
-		m_memberList->collectMemberNodes(memberNodes);
-		size_t count = memberNodes.size();
-		for(size_t i = 0; i < count; ++i)
-		{
-			MemberNode* memberNode = memberNodes[i];
-			if(snt_method == memberNode->m_nodeType)
-			{
-				MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
-				if(methodNode->isAbstract())
-				{
-					m_abstractFlag = lb_true;
-					return true;
-				}
-			}
-		}
-		m_abstractFlag = lb_false;
-	}
-	return (lb_true == m_abstractFlag);
-}
-
-bool ClassNode::isCopyableClass(TemplateArguments* templateArguments)
-{
-	if (lb_unknown == m_copyableFlag)
-	{
-		bool baseClassCopyable = true;
-		std::vector<TypeNameNode*> baseTypeNameNodes;
-		m_baseList->collectTypeNameNodes(baseTypeNameNodes);
-		size_t count = baseTypeNameNodes.size();
-		for (size_t i = 0; i < count; ++i)
-		{
-			TypeNameNode* typeNameNode = baseTypeNameNodes[i];
-			TypeNode* typeNode = typeNameNode->getActualTypeNode(templateArguments);
-			if (typeNode->isTemplateClassInstance())
-			{
-				TemplateClassInstanceTypeNode* templateClassInstanceTypeNode = static_cast<TemplateClassInstanceTypeNode*>(typeNode);
-				if (!templateClassInstanceTypeNode->m_classNode->isCopyableClass(&templateClassInstanceTypeNode->m_templateClassInstanceNode->m_templateArguments))
-				{
-					baseClassCopyable = false;
-					break;
-				}
-			}
-			else
-			{
-				assert(typeNode->isClass() && !typeNode->isTemplateClass());
-				ClassTypeNode* classTypeNode = static_cast<ClassTypeNode*>(typeNode);
-				if (!classTypeNode->m_classNode->isCopyableClass(0))
-				{
-					baseClassCopyable = false;
-					break;
-				}
-			}
-		}
-		m_copyableFlag = baseClassCopyable ? lb_true : lb_false;
-	}
-	return (lb_true == m_copyableFlag);
-}
 
 void ClassNode::collectOverrideMethods(std::vector<MethodNode*>& methodNodes, TemplateArguments* templateArguments)
 {
@@ -607,6 +470,11 @@ bool ClassNode::needSubclassProxy(TemplateArguments* templateArguments)
 	return false;
 }
 
+TypeCategory ClassNode::getTypeCategory()
+{
+	return m_typeCategory;
+}
+
 TypeNode* ClassNode::getTypeNode()
 {
 	return m_typeNode;
@@ -712,6 +580,7 @@ void ClassNode::checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* t
 	}
 }
 
+
 void ClassNode::checkSemantic(TemplateArguments* templateArguments)
 {
 	MemberNode::checkSemantic(templateArguments);
@@ -739,19 +608,7 @@ void ClassNode::checkSemantic(TemplateArguments* templateArguments)
 		}
 	}
 
-	checkBaseTypes(this, baseTypeNameNodes, baseTypeNodes, templateArguments);
-	if (0 == baseCount)
-	{
-		if (!isValueType())
-		{
-			std::string typeName;
-			m_typeNode->getFullName(typeName);
-			if (typeName != "::pafcore::Reference")
-			{
-				RaiseError_MissingReferenceBaseType(m_name);
-			}
-		}
-	}
+	//checkBaseTypes(this, baseTypeNameNodes, baseTypeNodes, templateArguments);
 
 	std::vector<MemberNode*> memberNodes;
 	m_memberList->collectMemberNodes(memberNodes);
@@ -763,4 +620,70 @@ void ClassNode::checkSemantic(TemplateArguments* templateArguments)
 		memberNodes[i]->checkSemantic(templateArguments);
 	}
 	checkMemberNames(this, memberNodes, templateArguments);
+
+	if (string_type == m_typeCategory)
+	{
+		bool findToString = false;
+		bool findFromString = false;
+		for (size_t i = 0; i < memberCount; ++i)
+		{
+			MemberNode* memberNode = memberNodes[i];
+			if (snt_method == memberNode->m_nodeType)
+			{
+				MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
+				if (!methodNode->isStatic())
+				{
+					if (methodNode->m_name->m_str == "toString")
+					{
+						findToString = true;
+					}
+					else if (methodNode->m_name->m_str == "fromString")
+					{
+						findFromString = true;
+					}
+				}
+			}
+		}
+		if (!findToString)
+		{
+			RaiseError_MissingToString(m_name);
+		}
+		if (!findFromString)
+		{
+			RaiseError_MissingFromString(m_name);
+		}
+	}
+	else if (buffer_type == m_typeCategory)
+	{
+		bool findToBuffer = false;
+		bool findFromBuffer = false;
+		for (size_t i = 0; i < memberCount; ++i)
+		{
+			MemberNode* memberNode = memberNodes[i];
+			if (snt_method == memberNode->m_nodeType)
+			{
+				MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
+				if (!methodNode->isStatic())
+				{
+					if (methodNode->m_name->m_str == "toBuffer")
+					{
+						findToBuffer = true;
+					}
+					else if (methodNode->m_name->m_str == "fromBuffer")
+					{
+						findFromBuffer = true;
+					}
+				}
+			}
+		}
+		if (!findToBuffer)
+		{
+			RaiseError_MissingToBuffer(m_name);
+		}
+		if (!findFromBuffer)
+		{
+			RaiseError_MissingFromBuffer(m_name);
+		}
+	}
+
 }

@@ -33,35 +33,54 @@
 
 std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCompound, ParameterPassing passing, ScopeNode* scopeNode)
 {
+	if (nullptr == typeNameNode)
+	{
+		return std::string("void");
+	}
 	std::string name;
-
 	switch (typeCompound)
 	{
-	case tc_unique_ptr:
-		name = "pafcore::unique_ptr<";
+	case tc_raw_ptr:
+		name = "::pafcore::RawPtr<";
 		break;
-	case tc_unique_array:
-		name = "pafcore::unique_array<";
-		break;
-	case tc_shared_ptr:
-		name = "pafcore::shared_ptr<";
-		break;
-	case tc_shared_array:
-		name = "pafcore::shared_array<";
+	case tc_raw_array:
+		name = "::pafcore::RawArray<";
 		break;
 	case tc_borrowed_ptr:
-		name = "pafcore::unique_ptr<";
+		name = "::pafcore::BorrowedPtr<";
 		break;
 	case tc_borrowed_array:
-		name = "pafcore::borrowed_array<";
+		name = "::pafcore::BorrowedArray<";
+		break;
+	case tc_unique_ptr:
+		name = "::pafcore::UniquePtr<";
+		break;
+	case tc_unique_array:
+		name = "::pafcore::UniqueArray<";
+		break;
+	case tc_shared_ptr:
+		name = "::pafcore::SharedPtr<";
+		break;
+	case tc_shared_array:
+		name = "::pafcore::SharedArray<";
 		break;
 	}
 	std::string typeName;
 	typeNameNode->getRelativeName(typeName, scopeNode);
 	name += typeName;
-	if (tc_none != typeCompound)
+
+	switch (typeCompound)
 	{
+	case tc_raw_ptr:
+	case tc_raw_array:
+	case tc_borrowed_ptr:
+	case tc_borrowed_array:
+	case tc_unique_ptr:
+	case tc_unique_array:
+	case tc_shared_ptr:
+	case tc_shared_array:
 		name += ">";
+		break;
 	}
 
 	switch (passing)
@@ -75,10 +94,10 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	case pp_const_reference:
 		name += " const & ";
 		break;
-	case pp_right_value_reference:
+	case pp_rvalue_reference:
 		name += " && ";
 		break;
-	case pp_const_right_value_reference:
+	case pp_const_rvalue_reference:
 		name += " const && ";
 		break;
 	}
@@ -86,7 +105,7 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 }
 
 const char g_metaMethodPrefix[] = "static ::pafcore::ErrorCode ";
-const char g_metaMethodPostfix[] = "(::pafcore::Variant* result, ::pafcore::Variant** args, int numArgs);\n";
+const char g_metaMethodPostfix[] = "(::pafcore::Variant* result, ::pafcore::Variant** args, uint32_t numArgs);\n";
 
 void writeMetaMethodDecl(const char* funcName, FILE* file, int indentation)
 {
@@ -323,23 +342,6 @@ void MetaHeaderFileGenerator::generateCode_Program(FILE* file, SourceFile* sourc
 			&& !typeNode->isTypeDeclaration()
 			&& typeNode->getSyntaxNode()->canGenerateMetaCode())
 		{
-			TypeCategory typeCategory = typeNode->getTypeCategory(0);
-			const char* typeCategoryName = "";
-			switch(typeCategory)
-			{
-			case enum_type:
-				typeCategoryName = "enum_object";
-				break;
-			case value_type:
-				typeCategoryName = "value_object";
-				break;
-			case reference_type:
-				typeCategoryName = "reference_object";
-				break;
-			default:
-				assert(false);
-			}
-
 			std::string typeName;
 			typeNode->getNativeName(typeName);
 			std::string metaTypeName;
@@ -348,9 +350,8 @@ void MetaHeaderFileGenerator::generateCode_Program(FILE* file, SourceFile* sourc
 				"struct RuntimeTypeOf<%s>\n"
 				"{\n"
 				"\ttypedef ::idlcpp::%s RuntimeType;\n"
-				"\tenum {type_category = ::pafcore::%s};\n"
 				"};\n\n",
-				typeName.c_str(), metaTypeName.c_str(), typeCategoryName);
+				typeName.c_str(), metaTypeName.c_str());
 			writeStringToFile(buf, file);
 		}
 	}
@@ -578,9 +579,9 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	writeStringToFile("();\n", file);
 
 	writeStringToFile("public:\n", file, indentation);
-	writeStringToFile("virtual void destroyInstance(void* address);\n", file, indentation + 1);
-	writeStringToFile("virtual void destroyArray(void* address);\n", file, indentation + 1);
-	writeStringToFile("virtual bool assign(void* dst, const void* src);\n", file, indentation + 1);
+	writeStringToFile("virtual bool destruct(void* address);\n", file, indentation + 1);
+	writeStringToFile("virtual bool copyConstruct(void* dst, const void* src);\n", file, indentation + 1);
+	writeStringToFile("virtual bool copyAssign(void* dst, const void* src);\n", file, indentation + 1);
 	
 	if(classNode->needSubclassProxy(templateArguments))
 	{
@@ -645,7 +646,7 @@ void writeInterfaceMethodDecl(MethodNode* methodNode, FILE* file, int indentatio
 	char buf[4096];
 	std::string resultName = CalcCompoundTypeName(methodNode->m_resultTypeName, methodNode->m_resultTypeCompound, pp_value, methodNode->getProgramNode());
 
-	sprintf_s(buf, "%s %s( ", resultName.c_str(), methodNode->m_name->m_str.c_str());
+	sprintf_s(buf, "%s %s(", resultName.c_str(), methodNode->m_name->m_str.c_str());
 	writeStringToFile(buf, file, indentation);
 
 	std::vector<ParameterNode*> parameterNodes;

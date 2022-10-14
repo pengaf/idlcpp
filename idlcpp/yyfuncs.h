@@ -29,7 +29,6 @@ enum PredefinedType
 	pt_float,
 	pt_double,
 	pt_long_double,
-	pt_string_t,
 	pt_end,
 };
 
@@ -41,8 +40,9 @@ enum TypeCategory
 	type_not_found,
 	primitive_type,
 	enum_type,
-	value_type,
-	reference_type,
+	object_type,
+	string_type,
+	buffer_type,
 	class_template,
 	template_parameter,
 };
@@ -52,12 +52,14 @@ typedef enum TypeCategory TypeCategory;
 enum TypeCompound
 {
 	tc_none,
+	tc_raw_ptr,
+	tc_raw_array,
+	tc_borrowed_ptr,
+	tc_borrowed_array,
 	tc_unique_ptr,
 	tc_unique_array,
 	tc_shared_ptr,
 	tc_shared_array,
-	tc_borrowed_ptr,
-	tc_borrowed_array,
 };
 
 typedef enum TypeCompound TypeCompound;
@@ -67,8 +69,8 @@ enum ParameterPassing
 	pp_value,
 	pp_reference,
 	pp_const_reference,
-	pp_right_value_reference,
-	pp_const_right_value_reference,
+	pp_rvalue_reference,
+	pp_const_rvalue_reference,
 };
 
 typedef enum ParameterPassing ParameterPassing;
@@ -79,7 +81,6 @@ enum SyntaxNodeType
 	snt_keyword_nocode,
 
 	snt_keyword_begin_primitive,
-	snt_keyword_void,
 	snt_keyword_bool,
 	snt_keyword_char,
 	snt_keyword_wchar_t,
@@ -90,13 +91,13 @@ enum SyntaxNodeType
 	snt_keyword_unsigned,
 	snt_keyword_float,
 	snt_keyword_double,
-	snt_keyword_string_t,
 	snt_keyword_end_primitive,
 
 	snt_begin_output,
 
 	snt_operator_right_reference,
 	snt_operator_scope,
+	snt_keyword_void,
 	snt_keyword_namespace,
 	snt_keyword_enum,
 	snt_keyword_class,
@@ -113,7 +114,7 @@ enum SyntaxNodeType
 
 	snt_end_output,
 
-	snt_keyword_primitive,
+	snt_keyword_typename,
 	snt_keyword_export,
 	snt_keyword_override,
 
@@ -201,13 +202,15 @@ void setPropertyGetter(SyntaxNode* property, SyntaxNode* getter);
 void setPropertySetter(SyntaxNode* property, SyntaxNode* setter);
 void setPropertyModifier(SyntaxNode* syntaxNode, SyntaxNode* modifier);
 
-SyntaxNode* newParameter(SyntaxNode* type, TypeCompound typeCompound, SyntaxNode* name);
+SyntaxNode* newParameter(SyntaxNode* type, TypeCompound typeCompound);
 void setParameterPassing(SyntaxNode* parameter, ParameterPassing passing);
+void setParameterName(SyntaxNode* parameter, SyntaxNode* name);
 void setDefaultParameter(SyntaxNode* parameter, SyntaxNode* defaultDenote);
 
 SyntaxNode* newParameterList(SyntaxNode* parameterList, SyntaxNode* delimiter, SyntaxNode* parameter);
 
 SyntaxNode* newMethod(SyntaxNode* name, SyntaxNode* leftParenthesis, SyntaxNode* parameterList, SyntaxNode* rightParenthesis, SyntaxNode* constant);
+void setMethodVoidResult(SyntaxNode* method, SyntaxNode* voidResult);
 void setMethodResult(SyntaxNode* method, SyntaxNode* result, TypeCompound resultCompound);
 void setMethodModifier(SyntaxNode* method, SyntaxNode* modifier);
 void setMethodOverride(SyntaxNode* method);
