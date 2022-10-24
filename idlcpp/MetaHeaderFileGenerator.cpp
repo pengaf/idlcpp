@@ -41,28 +41,28 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	switch (typeCompound)
 	{
 	case tc_raw_ptr:
-		name = "::pafcore::RawPtr<";
+		name = "::paf::RawPtr<";
 		break;
 	case tc_raw_array:
-		name = "::pafcore::RawArray<";
+		name = "::paf::RawArray<";
 		break;
 	case tc_borrowed_ptr:
-		name = "::pafcore::BorrowedPtr<";
+		name = "::paf::BorrowedPtr<";
 		break;
 	case tc_borrowed_array:
-		name = "::pafcore::BorrowedArray<";
+		name = "::paf::BorrowedArray<";
 		break;
 	case tc_unique_ptr:
-		name = "::pafcore::UniquePtr<";
+		name = "::paf::UniquePtr<";
 		break;
 	case tc_unique_array:
-		name = "::pafcore::UniqueArray<";
+		name = "::paf::UniqueArray<";
 		break;
 	case tc_shared_ptr:
-		name = "::pafcore::SharedPtr<";
+		name = "::paf::SharedPtr<";
 		break;
 	case tc_shared_array:
-		name = "::pafcore::SharedArray<";
+		name = "::paf::SharedArray<";
 		break;
 	}
 	std::string typeName;
@@ -104,8 +104,8 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	return name;
 }
 
-const char g_metaMethodPrefix[] = "static ::pafcore::ErrorCode ";
-const char g_metaMethodPostfix[] = "(::pafcore::Variant* result, ::pafcore::Variant** args, uint32_t numArgs);\n";
+const char g_metaMethodPrefix[] = "static ::paf::ErrorCode ";
+const char g_metaMethodPostfix[] = "(::paf::Variant* result, ::paf::Variant** args, uint32_t numArgs);\n";
 
 void writeMetaMethodDecl(const char* funcName, FILE* file, int indentation)
 {
@@ -133,30 +133,30 @@ void writeMetaMethodDecls(ClassNode* classNode, std::vector<MethodNode*> methodN
 	}
 }
 
-const char* g_metaPropertyDeclPrefix = "static ::pafcore::ErrorCode ";
+const char* g_metaPropertyDeclPrefix = "static ::paf::ErrorCode ";
 
-const char* g_metaSimplePropertyGetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
-const char* g_metaSimplePropertySetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* value);\n";
+const char* g_metaSimplePropertyGetDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::Variant* value);\n";
+const char* g_metaSimplePropertySetDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::Variant* value);\n";
 
-const char* g_metaArrayPropertyGetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, size_t index, ::pafcore::Variant* value);\n";
-const char* g_metaArrayPropertySetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, size_t index, ::pafcore::Variant* value);\n";
-const char* g_metaArrayPropertySizeDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* size);\n";
+const char* g_metaArrayPropertyGetDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, size_t index, ::paf::Variant* value);\n";
+const char* g_metaArrayPropertySetDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, size_t index, ::paf::Variant* value);\n";
+const char* g_metaArrayPropertySizeDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, size_t& size);\n";
 
-const char* g_metaCollectionPropertyGetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Iterator* iterator, ::pafcore::Variant* value);\n";
-const char* g_metaCollectionPropertySetDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Iterator* iterator, size_t replacingCount, ::pafcore::Variant* value, size_t count);\n";
-const char* g_metaCollectionPropertyIterateDeclPostfix = "(::pafcore::InstanceProperty* instanceProperty, ::pafcore::Variant* that, ::pafcore::Variant* iterator);\n";
+const char* g_metaCollectionPropertyGetDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::Iterator* iterator, ::paf::Variant* value);\n";
+const char* g_metaCollectionPropertySetDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::Iterator* iterator, size_t removeCount, ::paf::Variant* value);\n";
+const char* g_metaCollectionPropertyIterateDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::UniquePtr<::paf::Iterator>& iterator);\n";
 
 
-const char* g_metaStaticSimplePropertyGetDeclPostfix = "(::pafcore::Variant* value);\n";
-const char* g_metaStaticSimplePropertySetDeclPostfix = "(::pafcore::Variant* value);\n";
+const char* g_metaStaticSimplePropertyGetDeclPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Variant* value);\n";
+const char* g_metaStaticSimplePropertySetDeclPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Variant* value);\n";
 
-const char* g_metaStaticArrayPropertyGetDeclPostfix = "(size_t index, ::pafcore::Variant* value);\n";
-const char* g_metaStaticArrayPropertySetDeclPostfix = "(size_t index, ::pafcore::Variant* value);\n";
-const char* g_metaStaticArrayPropertySizeDeclPostfix = "(::pafcore::Variant* size);\n";
+const char* g_metaStaticArrayPropertyGetDeclPostfix = "(::paf::StaticProperty* staticProperty, size_t index, ::paf::Variant* value);\n";
+const char* g_metaStaticArrayPropertySetDeclPostfix = "(::paf::StaticProperty* staticProperty, size_t index, ::paf::Variant* value);\n";
+const char* g_metaStaticArrayPropertySizeDeclPostfix = "(::paf::StaticProperty* staticProperty, size_t& size);\n";
 
-const char* g_metaStaticCollectionPropertyGetDeclPostfix = "(::pafcore::Iterator* iterator, ::pafcore::Variant* value);\n";
-const char* g_metaStaticCollectionPropertySetDeclPostfix = "(::pafcore::Iterator* iterator, size_t replacingCount, ::pafcore::Variant* value, size_t count);\n";
-const char* g_metaStaticCollectionPropertyDeclIteratePostfix = "(::pafcore::Variant* iterator);\n";
+const char* g_metaStaticCollectionPropertyGetDeclPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Iterator* iterator, ::paf::Variant* value);\n";
+const char* g_metaStaticCollectionPropertySetDeclPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Iterator* iterator, size_t removeCount, ::paf::Variant* value);\n";
+const char* g_metaStaticCollectionPropertyDeclIteratePostfix = "(::paf::StaticProperty* staticProperty, ::paf::UniquePtr<::paf::Iterator>& iterator);\n";
 
 
 
@@ -322,8 +322,6 @@ void MetaHeaderFileGenerator::generateCode_Program(FILE* file, SourceFile* sourc
 	writeStringToFile(buf, file);
 	sprintf_s(buf, "#include \"%sVariant.h\"\n", pafcorePath.c_str());
 	writeStringToFile(buf, file);
-	sprintf_s(buf, "#include \"%sSubclassInvoker.h\"\n", pafcorePath.c_str());
-	writeStringToFile(buf, file);
 
 	writeStringToFile("\nnamespace idlcpp\n{\n\n", file);
 	generateCode_Namespace(file, programNode, 1);
@@ -413,7 +411,7 @@ void MetaHeaderFileGenerator::generateCode_Enum(FILE* file, EnumNode* enumNode, 
 	std::string metaTypeName;
 	GetMetaTypeFullName(metaTypeName, enumNode, templateArguments);
 
-	sprintf_s(buf, "class %s : public ::pafcore::EnumType\n",
+	sprintf_s(buf, "class %s : public ::paf::EnumType\n",
 		metaTypeName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
@@ -461,7 +459,7 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	std::string metaClassName;
 	GetMetaTypeFullName(metaClassName, classNode, templateArguments);
 
-	sprintf_s(buf, "class %s : public ::pafcore::ClassType\n",
+	sprintf_s(buf, "class %s : public ::paf::ClassType\n",
 		metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
@@ -586,8 +584,7 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	if(classNode->needSubclassProxy(templateArguments))
 	{
 		writeStringToFile("public:\n", file, indentation);
-		writeStringToFile("virtual void* createSubclassProxy(::pafcore::SubclassInvoker* subclassInvoker);\n", file, indentation + 1);
-		writeStringToFile("virtual void destroySubclassProxy(void* subclassProxy);\n", file, indentation + 1);
+		writeStringToFile("virtual ::paf::UniquePtr<::paf::Introspectable> createSubclassProxy(::paf::SubclassInvoker* subclassInvoker);\n", file, indentation + 1);
 	}
 	writeMetaPropertyDecls(classNode, propertyNodes, file, indentation);
 	writeMetaMethodDecls(classNode, methodNodes, file, indentation);
@@ -694,9 +691,9 @@ void MetaHeaderFileGenerator::generateCode_SubclassProxy(FILE* file, ClassNode* 
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
 	writeStringToFile("public:\n", file, indentation);
-	writeStringToFile("::pafcore::SubclassInvoker* m_subclassInvoker;\n", file, indentation + 1);
+	writeStringToFile("::paf::SubclassInvoker* m_subclassInvoker;\n", file, indentation + 1);
 	writeStringToFile("public:\n", file, indentation);
-	sprintf_s(buf, "%s(::pafcore::SubclassInvoker* subclassInvoker);\n", subclassProxyName.c_str());
+	sprintf_s(buf, "%s(::paf::SubclassInvoker* subclassInvoker);\n", subclassProxyName.c_str());
 	writeStringToFile(buf, file, indentation + 1);
 	sprintf_s(buf, "~%s();\n", subclassProxyName.c_str());
 	writeStringToFile(buf, file, indentation + 1);
@@ -728,7 +725,7 @@ void MetaHeaderFileGenerator::generateCode_Typedef(FILE* file, TypedefNode* type
 	std::string metaTypeName;
 	GetMetaTypeFullName(metaTypeName, typedefNode, templateArguments);
 
-	sprintf_s(buf, "class %s : public ::pafcore::TypeAlias\n",
+	sprintf_s(buf, "class %s : public ::paf::TypeAlias\n",
 		metaTypeName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
@@ -756,7 +753,7 @@ void MetaHeaderFileGenerator::generateCode_TypeDeclaration(FILE* file, TypeDecla
 	std::string metaTypeName;
 	GetMetaTypeFullName(metaTypeName, typeDeclarationNode, templateArguments);
 
-	sprintf_s(buf, "class %s : public ::pafcore::TypeAlias\n",
+	sprintf_s(buf, "class %s : public ::paf::TypeAlias\n",
 		metaTypeName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);

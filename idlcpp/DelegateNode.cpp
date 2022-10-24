@@ -107,7 +107,7 @@ void DelegateNode::extendInternalCode(TypeNode* enclosingTypeNode, TemplateArgum
 {
 	ClassNode* classNode = (ClassNode*)newClass(m_keyword, 0, m_name);
 
-	IdentifyNode* nsIdentifyNode = (IdentifyNode*)newIdentify("pafcore");
+	IdentifyNode* nsIdentifyNode = (IdentifyNode*)newIdentify("paf");
 	ScopeNameNode* nsScopeNameNode = (ScopeNameNode*)newScopeName(nsIdentifyNode, 0, 0, 0);
 
 	IdentifyNode* baseIdentifyNode = (IdentifyNode*)newIdentify("Delegate");

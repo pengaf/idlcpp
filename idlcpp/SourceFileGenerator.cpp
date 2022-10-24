@@ -257,11 +257,11 @@ void SourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, c
 		generateCode_TemplateHeader(file, classNode, indentation);
 		if (isInline)
 		{
-			writeStringToFile("inline ::pafcore::ClassType* ", file, indentation);
+			writeStringToFile("inline ::paf::ClassType* ", file, indentation);
 		}
 		else
 		{
-			writeStringToFile("::pafcore::ClassType* ", file, indentation);
+			writeStringToFile("::paf::ClassType* ", file, indentation);
 		}
 		writeStringToFile(typeName.c_str(), file);
 		writeStringToFile("::GetType()\n", file);
@@ -276,11 +276,11 @@ void SourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, c
 			generateCode_TemplateHeader(file, classNode, indentation);
 			if (isInline)
 			{
-				writeStringToFile("inline ::pafcore::ClassType* ", file, indentation);
+				writeStringToFile("inline ::paf::ClassType* ", file, indentation);
 			}
 			else
 			{
-				writeStringToFile("::pafcore::ClassType* ", file, indentation);
+				writeStringToFile("::paf::ClassType* ", file, indentation);
 			}
 			writeStringToFile(typeName.c_str(), file);
 			writeStringToFile("::getType()\n", file);
@@ -385,13 +385,13 @@ void SourceFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delega
 		writeDelegateImpl_InitResult(delegateNode, file, indentation + 1);
 	}
 	
-	writeStringToFile("::pafcore::Variant __result__;\n", file, indentation + 1);
+	writeStringToFile("::paf::Variant __result__;\n", file, indentation + 1);
 	if (0 < paramCount)
 	{
-		sprintf_s(buf, "::pafcore::Variant __arguments__[%zd];\n", paramCount);
+		sprintf_s(buf, "::paf::Variant __arguments__[%zd];\n", paramCount);
 		writeStringToFile(buf, file, indentation + 1);
 	}
-	sprintf_s(buf, "::pafcore::Variant* __args__[%zd] = {0", paramCount + 1);
+	sprintf_s(buf, "::paf::Variant* __args__[%zd] = {0", paramCount + 1);
 	writeStringToFile(buf, file, indentation + 1);
 	for (size_t i = 0; i < paramCount; ++i)
 	{
@@ -400,14 +400,14 @@ void SourceFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delega
 	}
 	writeStringToFile("};\n", file, 0);
 
-	writeStringToFile("::pafcore::CallBack* __callBack__ = getCallBack();\n", file, indentation + 1);
+	writeStringToFile("::paf::CallBack* __callBack__ = getCallBack();\n", file, indentation + 1);
 	writeStringToFile("while (__callBack__)\n", file, indentation + 1);
 	writeStringToFile("{\n", file, indentation + 1);
-	writeStringToFile("::pafcore::CallBack* __next__ = __callBack__->getNext();\n", file, indentation + 2);
-	writeStringToFile("::pafcore::ClassType* __classType__ = __callBack__->getType();\n", file, indentation + 2);
-	writeStringToFile("if (__classType__ == ::pafcore::FunctionCallBack::GetType())\n", file, indentation + 2);
+	writeStringToFile("::paf::CallBack* __next__ = __callBack__->getNext();\n", file, indentation + 2);
+	writeStringToFile("::paf::ClassType* __classType__ = __callBack__->getType();\n", file, indentation + 2);
+	writeStringToFile("if (__classType__ == ::paf::FunctionCallBack::GetType())\n", file, indentation + 2);
 	writeStringToFile("{\n", file, indentation + 2);
-	writeStringToFile("::pafcore::FunctionCallBack* __functionCallBack__ = static_cast<::pafcore::FunctionCallBack*>(__callBack__);\n", file, indentation + 3);
+	writeStringToFile("::paf::FunctionCallBack* __functionCallBack__ = static_cast<::paf::FunctionCallBack*>(__callBack__);\n", file, indentation + 3);
 	writeStringToFile(isVoid ? "" : "__res__ = ", file, indentation + 3);
 	writeStringToFile("(*(CallBackFunction)__functionCallBack__->m_function)(__functionCallBack__->m_userData", file, 0);
 	for (size_t i = 0; i < paramCount; ++i)
@@ -509,11 +509,11 @@ void SourceFileGenerator::generateCode_AdditionalMethod(FILE* file, MethodNode* 
 	{
 		if (classNode->m_sharedFlag)
 		{
-			sprintf_s(wrappedTypeName, "::pafcore::SharedPtr<%s>", typeName.c_str());
+			sprintf_s(wrappedTypeName, "::paf::SharedPtr<%s>", typeName.c_str());
 		}
 		else
 		{
-			sprintf_s(wrappedTypeName, "::pafcore::UniquePtr<%s>", typeName.c_str());
+			sprintf_s(wrappedTypeName, "::paf::UniquePtr<%s>", typeName.c_str());
 		}
 	}
 	else
@@ -521,11 +521,11 @@ void SourceFileGenerator::generateCode_AdditionalMethod(FILE* file, MethodNode* 
 		assert("NewArray" == methodNode->m_name->m_str);
 		if (classNode->m_sharedFlag)
 		{
-			sprintf_s(wrappedTypeName, "::pafcore::SharedArray<%s>", typeName.c_str());
+			sprintf_s(wrappedTypeName, "::paf::SharedArray<%s>", typeName.c_str());
 		}
 		else
 		{
-			sprintf_s(wrappedTypeName, "::pafcore::UniqueArray<%s>", typeName.c_str());
+			sprintf_s(wrappedTypeName, "::paf::UniqueArray<%s>", typeName.c_str());
 		}
 	}
 

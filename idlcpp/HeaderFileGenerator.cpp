@@ -121,28 +121,28 @@ void generateCode_CompoundTypeName(FILE* file, TypeNameNode* typeNameNode, TypeC
 	switch (typeCompound)
 	{
 	case tc_raw_ptr:
-		writeStringToFile("::pafcore::RawPtr<", file);
+		writeStringToFile("::paf::RawPtr<", file);
 		break;
 	case tc_raw_array:
-		writeStringToFile("::pafcore::RawArray<", file);
+		writeStringToFile("::paf::RawArray<", file);
 		break;
 	case tc_borrowed_ptr:
-		writeStringToFile("::pafcore::BorrowedPtr<", file);
+		writeStringToFile("::paf::BorrowedPtr<", file);
 		break;
 	case tc_borrowed_array:
-		writeStringToFile("::pafcore::BorrowedArray<", file);
+		writeStringToFile("::paf::BorrowedArray<", file);
 		break;
 	case tc_unique_ptr:
-		writeStringToFile("::pafcore::UniquePtr<", file);
+		writeStringToFile("::paf::UniquePtr<", file);
 		break;
 	case tc_unique_array:
-		writeStringToFile("::pafcore::UniqueArray<", file);
+		writeStringToFile("::paf::UniqueArray<", file);
 		break;
 	case tc_shared_ptr:
-		writeStringToFile("::pafcore::SharedPtr<", file);
+		writeStringToFile("::paf::SharedPtr<", file);
 		break;
 	case tc_shared_array:
-		writeStringToFile("::pafcore::SharedArray<", file);
+		writeStringToFile("::paf::SharedArray<", file);
 		break;
 	}
 	generateCode_TypeName__(file, typeNameNode, scopeNode, true, 0 == indentation);
@@ -225,10 +225,10 @@ void HeaderFileGenerator::generateCode_Program(FILE* file, SourceFile* sourceFil
 	writeStringToFile("#pragma once\n\n", file);
 
 	g_compiler.outputUsedTypes(file, sourceFile, pafcorePath.c_str());
-	writeStringToFile("namespace pafcore{ class ClassType; }\n", file);
+	writeStringToFile("namespace paf{ class ClassType; }\n", file);
 	if (sourceFile->m_hasCollectionProperty)
 	{
-		writeStringToFile("namespace pafcore{ class Iterator; }\n", file);
+		writeStringToFile("namespace paf{ class Iterator; }\n", file);
 	}
 
 	generateCode_Namespace(file, sourceFile->m_syntaxTree, -1);
@@ -454,8 +454,8 @@ void HeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, i
 	}
 	if (!classNode->isNoMeta())
 	{
-		writeStringToFile("static ::pafcore::ClassType* GetType();\n", file, indentation + 1);
-		writeStringToFile("::pafcore::ClassType* getType();\n", file, indentation + 1);
+		writeStringToFile("static ::paf::ClassType* GetType();\n", file, indentation + 1);
+		writeStringToFile("::paf::ClassType* getType();\n", file, indentation + 1);
 		writeStringToFile("void* getAddress();\n", file, indentation + 1);
 	}
 	for(size_t i = 0; i < memberCount; ++i)
@@ -505,7 +505,7 @@ void HeaderFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delega
 	generateCode_Token(file, delegateNode->m_keyword, indentation);
 	generateCode_Identify(file, delegateNode->m_name, 0);
 	
-	writeStringToFile(" : public ::pafcore::Delegate\n", file);
+	writeStringToFile(" : public ::paf::Delegate\n", file);
 	writeStringToFile("{\n", file, indentation);
 	writeStringToFile("public:\n", file, indentation);
 	
@@ -540,7 +540,7 @@ void HeaderFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delega
 	writeStringToFile("(*CallBackFunction)(void* userData, ", file, 0);
 	generateCode_ParameterList(file, delegateNode->m_parameterList, delegateNode->m_enclosing);
 	writeStringToFile(");\n", file);
-	writeStringToFile("::pafcore::FunctionCallBack* addFunction(CallBackFunction function, void* userData)\n", file, indentation + 1);
+	writeStringToFile("::paf::FunctionCallBack* addFunction(CallBackFunction function, void* userData)\n", file, indentation + 1);
 	writeStringToFile("{return Delegate::addFunction(function, userData);}\n", file, indentation + 1);
 	writeStringToFile("};\n", file, indentation);
 }
@@ -637,7 +637,7 @@ void HeaderFileGenerator::generateCode_Property_Get(FILE* file, PropertyNode* pr
 	}
 	else if (propertyNode->isCollection())
 	{
-		writeStringToFile("::pafcore::Iterator*", file);
+		writeStringToFile("::paf::Iterator*", file);
 	}
 	if (propertyNode->isStatic())
 	{
@@ -691,7 +691,7 @@ void HeaderFileGenerator::generateCode_Property_Set(FILE* file, PropertyNode* pr
 	}
 	else if (propertyNode->isCollection())
 	{
-		writeStringToFile("::pafcore::Iterator* dstIterator, size_t dstCount, ", file);
+		writeStringToFile("::paf::Iterator* dstIterator, size_t dstCount, ", file);
 	}
 	generateCode_CompoundTypeName(file, propertyNode->m_typeName, propertyNode->m_set->m_typeCompound, propertyNode->m_enclosing, true, 0);
 	generateCode_ParameterPassing(file, propertyNode->m_set->m_passing);
@@ -728,7 +728,7 @@ void HeaderFileGenerator::generateCode_Property_Iterate(FILE* file, PropertyNode
 		writeStringToFile("static ", file, indentation);
 		indentation = 0;
 	}
-	writeStringToFile("::pafcore::Iterator* iterate_", file, indentation);
+	writeStringToFile("::paf::Iterator* iterate_", file, indentation);
 	writeStringToFile(propertyNode->m_name->m_str.c_str(), file);
 	writeStringToFile("();", file);
 }

@@ -621,69 +621,69 @@ void ClassNode::checkSemantic(TemplateArguments* templateArguments)
 	}
 	checkMemberNames(this, memberNodes, templateArguments);
 
-	if (string_type == m_typeCategory)
-	{
-		bool findToString = false;
-		bool findFromString = false;
-		for (size_t i = 0; i < memberCount; ++i)
-		{
-			MemberNode* memberNode = memberNodes[i];
-			if (snt_method == memberNode->m_nodeType)
-			{
-				MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
-				if (!methodNode->isStatic())
-				{
-					if (methodNode->m_name->m_str == "toString")
-					{
-						findToString = true;
-					}
-					else if (methodNode->m_name->m_str == "fromString")
-					{
-						findFromString = true;
-					}
-				}
-			}
-		}
-		if (!findToString)
-		{
-			RaiseError_MissingToString(m_name);
-		}
-		if (!findFromString)
-		{
-			RaiseError_MissingFromString(m_name);
-		}
-	}
-	else if (buffer_type == m_typeCategory)
-	{
-		bool findToBuffer = false;
-		bool findFromBuffer = false;
-		for (size_t i = 0; i < memberCount; ++i)
-		{
-			MemberNode* memberNode = memberNodes[i];
-			if (snt_method == memberNode->m_nodeType)
-			{
-				MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
-				if (!methodNode->isStatic())
-				{
-					if (methodNode->m_name->m_str == "toBuffer")
-					{
-						findToBuffer = true;
-					}
-					else if (methodNode->m_name->m_str == "fromBuffer")
-					{
-						findFromBuffer = true;
-					}
-				}
-			}
-		}
-		if (!findToBuffer)
-		{
-			RaiseError_MissingToBuffer(m_name);
-		}
-		if (!findFromBuffer)
-		{
-			RaiseError_MissingFromBuffer(m_name);
-		}
-	}
+	//if (string_type == m_typeCategory)
+	//{
+	//	bool findToString = false;
+	//	bool findFromString = false;
+	//	for (size_t i = 0; i < memberCount; ++i)
+	//	{
+	//		MemberNode* memberNode = memberNodes[i];
+	//		if (snt_method == memberNode->m_nodeType)
+	//		{
+	//			MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
+	//			if (!methodNode->isStatic())
+	//			{
+	//				if (methodNode->m_name->m_str == "toString")
+	//				{
+	//					findToString = true;
+	//				}
+	//				else if (methodNode->m_name->m_str == "fromString")
+	//				{
+	//					findFromString = true;
+	//				}
+	//			}
+	//		}
+	//	}
+	//	if (!findToString)
+	//	{
+	//		RaiseError_MissingToString(m_name);
+	//	}
+	//	if (!findFromString)
+	//	{
+	//		RaiseError_MissingFromString(m_name);
+	//	}
+	//}
+	//else if (buffer_type == m_typeCategory)
+	//{
+	//	bool findToBuffer = false;
+	//	bool findFromBuffer = false;
+	//	for (size_t i = 0; i < memberCount; ++i)
+	//	{
+	//		MemberNode* memberNode = memberNodes[i];
+	//		if (snt_method == memberNode->m_nodeType)
+	//		{
+	//			MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
+	//			if (!methodNode->isStatic())
+	//			{
+	//				if (methodNode->m_name->m_str == "toBuffer")
+	//				{
+	//					findToBuffer = true;
+	//				}
+	//				else if (methodNode->m_name->m_str == "fromBuffer")
+	//				{
+	//					findFromBuffer = true;
+	//				}
+	//			}
+	//		}
+	//	}
+	//	if (!findToBuffer)
+	//	{
+	//		RaiseError_MissingToBuffer(m_name);
+	//	}
+	//	if (!findFromBuffer)
+	//	{
+	//		RaiseError_MissingFromBuffer(m_name);
+	//	}
+	//}
 
 }
