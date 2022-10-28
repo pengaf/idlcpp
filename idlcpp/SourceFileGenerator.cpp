@@ -272,39 +272,39 @@ void SourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, c
 		writeStringToFile("}\n\n", file, indentation);
 
 		//if (classNode->isIntrospectable())
-		{
-			generateCode_TemplateHeader(file, classNode, indentation);
-			if (isInline)
-			{
-				writeStringToFile("inline ::paf::ClassType* ", file, indentation);
-			}
-			else
-			{
-				writeStringToFile("::paf::ClassType* ", file, indentation);
-			}
-			writeStringToFile(typeName.c_str(), file);
-			writeStringToFile("::getType()\n", file);
-			writeStringToFile("{\n", file, indentation);
-			writeStringToFile("return ::RuntimeTypeOf<", file, indentation + 1);
-			writeStringToFile(typeName.c_str(), file);
-			writeStringToFile(">::RuntimeType::GetSingleton();\n", file);
-			writeStringToFile("}\n\n", file, indentation);
+		//{
+		//	generateCode_TemplateHeader(file, classNode, indentation);
+		//	if (isInline)
+		//	{
+		//		writeStringToFile("inline ::paf::ClassType* ", file, indentation);
+		//	}
+		//	else
+		//	{
+		//		writeStringToFile("::paf::ClassType* ", file, indentation);
+		//	}
+		//	writeStringToFile(typeName.c_str(), file);
+		//	writeStringToFile("::getType()\n", file);
+		//	writeStringToFile("{\n", file, indentation);
+		//	writeStringToFile("return ::RuntimeTypeOf<", file, indentation + 1);
+		//	writeStringToFile(typeName.c_str(), file);
+		//	writeStringToFile(">::RuntimeType::GetSingleton();\n", file);
+		//	writeStringToFile("}\n\n", file, indentation);
 
-			generateCode_TemplateHeader(file, classNode, indentation);
-			if (isInline)
-			{
-				writeStringToFile("inline void* ", file, indentation);
-			}
-			else
-			{
-				writeStringToFile("void* ", file, indentation);
-			}
-			writeStringToFile(typeName.c_str(), file);
-			writeStringToFile("::getAddress()\n", file);
-			writeStringToFile("{\n", file, indentation);
-			writeStringToFile("return this;\n", file, indentation + 1);
-			writeStringToFile("}\n\n", file, indentation);
-		}
+		//	generateCode_TemplateHeader(file, classNode, indentation);
+		//	if (isInline)
+		//	{
+		//		writeStringToFile("inline void* ", file, indentation);
+		//	}
+		//	else
+		//	{
+		//		writeStringToFile("void* ", file, indentation);
+		//	}
+		//	writeStringToFile(typeName.c_str(), file);
+		//	writeStringToFile("::getAddress()\n", file);
+		//	writeStringToFile("{\n", file, indentation);
+		//	writeStringToFile("return this;\n", file, indentation + 1);
+		//	writeStringToFile("}\n\n", file, indentation);
+		//}
 	}
 
 	if (!classNode->isNoCode())

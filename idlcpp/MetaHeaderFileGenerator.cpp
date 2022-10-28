@@ -467,7 +467,6 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	std::vector<MemberNode*> memberNodes;
 	std::vector<MethodNode*> methodNodes;
 	std::vector<MethodNode*> staticMethodNodes;
-	std::vector<MethodNode*> typeMethodNodes;
 	std::vector<PropertyNode*> propertyNodes;
 	std::vector<PropertyNode*> staticPropertyNodes;
 	std::vector<MemberNode*> subTypeNodes;
@@ -497,20 +496,7 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 				{
 					if(methodNode->isStatic())
 					{
-						if (methodNode->m_name->m_str == "__destroyInstance__"
-							|| methodNode->m_name->m_str == "__destroyArray__"
-							|| methodNode->m_name->m_str == "__assign__")
-						{
-							typeMethodNodes.push_back(methodNode);
-							//if (0 == methodNode->m_nativeName)
-							//{
-							//	staticMethodNodes.push_back(methodNode);
-							//}
-						}
-						else
-						{
-							staticMethodNodes.push_back(methodNode);
-						}
+						staticMethodNodes.push_back(methodNode);
 					}
 					else
 					{
@@ -576,15 +562,20 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	writeStringToFile(metaClassName.c_str(), metaClassName.length(), file, indentation + 1);
 	writeStringToFile("();\n", file);
 
-	writeStringToFile("public:\n", file, indentation);
-	writeStringToFile("virtual bool destruct(void* address);\n", file, indentation + 1);
-	writeStringToFile("virtual bool copyConstruct(void* dst, const void* src);\n", file, indentation + 1);
-	writeStringToFile("virtual bool copyAssign(void* dst, const void* src);\n", file, indentation + 1);
-	
-	if(classNode->needSubclassProxy(templateArguments))
+	if (nullptr == classNode->m_category || classNode->m_category->m_str == "object")
 	{
 		writeStringToFile("public:\n", file, indentation);
-		writeStringToFile("virtual ::paf::UniquePtr<::paf::Introspectable> createSubclassProxy(::paf::SubclassInvoker* subclassInvoker);\n", file, indentation + 1);
+		writeStringToFile("virtual ::paf::ErrorCode placementNew(void* address, ::paf::Variant** args, uint32_t numArgs);\n", file, indentation + 1);
+		writeStringToFile("virtual bool placementNewArray(void* address, size_t count) override;\n", file, indentation + 1);
+		writeStringToFile("virtual bool destruct(void* address) override;\n", file, indentation + 1);
+		writeStringToFile("virtual bool copyConstruct(void* dst, const void* src) override;\n", file, indentation + 1);
+		writeStringToFile("virtual bool copyAssign(void* dst, const void* src) override;\n", file, indentation + 1);
+	
+		if(classNode->needSubclassProxy(templateArguments))
+		{
+			writeStringToFile("public:\n", file, indentation);
+			writeStringToFile("virtual ::paf::UniquePtr<::paf::Introspectable> createSubclassProxy(::paf::SubclassInvoker* subclassInvoker) override;\n", file, indentation + 1);
+		}
 	}
 	writeMetaPropertyDecls(classNode, propertyNodes, file, indentation);
 	writeMetaMethodDecls(classNode, methodNodes, file, indentation);

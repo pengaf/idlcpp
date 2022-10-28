@@ -43,8 +43,8 @@ enum TypeCategory
 	object_type,
 	string_type,
 	buffer_type,
-	class_template,
-	template_parameter,
+	//class_template,
+	//template_parameter,
 };
 
 typedef enum TypeCategory TypeCategory;

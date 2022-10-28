@@ -44,8 +44,8 @@ public:
 	void setMemberList(TokenNode* leftBrace, MemberListNode* memberList, TokenNode* rightBrace);
 	void buildAdditionalMethods();
 	void extendInternalCode(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
-	bool isAbstractClass();
-	bool isCopyableClass(TemplateArguments* templateArguments);
+	//bool isAbstractClass();
+	//bool isCopyableClass(TemplateArguments* templateArguments);
 	bool needSubclassProxy(TemplateArguments* templateArguments);
 	bool hasOverrideMethod(TemplateArguments* templateArguments);
 	bool isAdditionalMethod(MethodNode* methodNode);

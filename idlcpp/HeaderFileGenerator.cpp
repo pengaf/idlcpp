@@ -455,8 +455,14 @@ void HeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, i
 	if (!classNode->isNoMeta())
 	{
 		writeStringToFile("static ::paf::ClassType* GetType();\n", file, indentation + 1);
-		writeStringToFile("::paf::ClassType* getType();\n", file, indentation + 1);
-		writeStringToFile("void* getAddress();\n", file, indentation + 1);
+		writeStringToFile("::paf::ClassType* getType()\n", file, indentation + 1);
+		writeStringToFile("{\n", file, indentation + 1);
+		writeStringToFile("return GetType();\n", file, indentation + 2);
+		writeStringToFile("}\n", file, indentation + 1);
+		writeStringToFile("void* getAddress()\n", file, indentation + 1);
+		writeStringToFile("{\n", file, indentation + 1);
+		writeStringToFile("return this;\n", file, indentation + 2);
+		writeStringToFile("}\n", file, indentation + 1);
 	}
 	for(size_t i = 0; i < memberCount; ++i)
 	{
