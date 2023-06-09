@@ -46,14 +46,6 @@ const char* typeCompoundToString(TypeCompound typeCompound)
 		return "::paf::TypeCompound::raw_ptr";
 	case tc_raw_array:
 		return "::paf::TypeCompound::raw_array";
-	case tc_borrowed_ptr:
-		return "::paf::TypeCompound::borrowed_ptr";
-	case tc_borrowed_array:
-		return "::paf::TypeCompound::borrowed_array";
-	case tc_unique_ptr:
-		return "::paf::TypeCompound::unique_ptr";
-	case tc_unique_array:
-		return "::paf::TypeCompound::unique_array";
 	case tc_shared_ptr:
 		return "::paf::TypeCompound::shared_ptr";
 	case tc_shared_array:
@@ -187,44 +179,16 @@ void writeMetaMethodImpl_CastParam(ClassNode* classNode, TemplateArguments* temp
 	}
 	else if (tc_raw_ptr == parameterNode->m_typeCompound)
 	{
-		sprintf_s(buf, "::paf::RawPtr<%s> a%zd;\n", typeName.c_str(), paramIndex);
+		sprintf_s(buf, "%s* a%zd;\n", typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!args[%zd]->castToRawPtr<%s>(a%zd))\n", argIndex, typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
 	}
 	else if (tc_raw_array == parameterNode->m_typeCompound)
 	{
-		sprintf_s(buf, "::paf::RawArray<%s> a%zd;\n", typeName.c_str(), paramIndex);
+		sprintf_s(buf, "::paf::array_t<%s> a%zd;\n", typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!args[%zd]->castToRawArray<%s>(a%zd))\n", argIndex, typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_borrowed_ptr == parameterNode->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::BorrowedPtr<%s> a%zd;\n", typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!args[%zd]->castToBorrowedPtr<%s>(a%zd))\n", argIndex, typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_borrowed_array == parameterNode->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::BorrowedArray<%s> a%zd;\n", typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!args[%zd]->castToBorrowedArray<%s>(a%zd))\n", argIndex, typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_unique_ptr == parameterNode->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::UniquePtr<%s> a%zd;\n", typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!args[%zd]->castToUniquePtr<%s>(a%zd))\n", argIndex, typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_unique_array == parameterNode->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::UniqueArray<%s> a%zd;\n", typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!args[%zd]->castToUniqueArray<%s>(a%zd))\n", argIndex, typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
 	}
 	else if (tc_shared_ptr == parameterNode->m_typeCompound)
@@ -469,6 +433,13 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 	}
 	writeStringToFile("}\n\n", file, indentation);
 
+	sprintf_s(buf, "bool %s::placementNewCopy(void* dst, const void* src)\n", metaClassName.c_str());
+	writeStringToFile(buf, file, indentation);
+	writeStringToFile("{\n", file, indentation);
+	sprintf_s(buf, "return ::paf::PlacementNewCopyCaller<%s>::Call(dst, src);\n", className.c_str());
+	writeStringToFile(buf, file, indentation + 1);
+	writeStringToFile("}\n\n", file, indentation);
+
 
 	sprintf_s(buf, "bool %s::placementNewArray(void* address, size_t count)\n", metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
@@ -484,13 +455,6 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 	writeStringToFile(buf, file, indentation + 1);
 	writeStringToFile("}\n\n", file, indentation);
 
-	sprintf_s(buf, "bool %s::copyConstruct(void* dst, const void* src)\n", metaClassName.c_str());
-	writeStringToFile(buf, file, indentation);
-	writeStringToFile("{\n", file, indentation);
-	sprintf_s(buf, "return ::paf::CopyConstructorCaller<%s>::Call(dst, src);\n", className.c_str());
-	writeStringToFile(buf, file, indentation + 1);
-	writeStringToFile("}\n\n", file, indentation);
-
 	sprintf_s(buf, "bool %s::copyAssign(void* dst, const void* src)\n", metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
@@ -502,10 +466,10 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 	{
 		std::string subclassProxyName;
 		GetSubclassProxyFullName(subclassProxyName, classNode, templateArguments);
-		sprintf_s(buf, "::paf::UniquePtr<::paf::Introspectable> %s::createSubclassProxy(::paf::SubclassInvoker* subclassInvoker)\n", metaClassName.c_str());
+		sprintf_s(buf, "::paf::SharedPtr<::paf::Introspectable> %s::createSubclassProxy(::paf::SubclassInvoker* subclassInvoker)\n", metaClassName.c_str());
 		writeStringToFile(buf, file, indentation);
 		writeStringToFile("{\n", file, indentation);
-		sprintf_s(buf, "return ::paf::UniquePtr<::paf::Introspectable>(new %s(subclassInvoker));\n", subclassProxyName.c_str());
+		sprintf_s(buf, "return ::paf::SharedPtr<::paf::Introspectable>::SharedFrom(new %s(subclassInvoker));\n", subclassProxyName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 		writeStringToFile("}\n\n", file, indentation);
 	}
@@ -736,7 +700,7 @@ const char* g_metaArrayPropertySizeImplPostfix = "(::paf::InstanceProperty* inst
 
 const char* g_metaCollectionPropertyGetImplPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::Iterator* iterator, ::paf::Variant* value)\n";
 const char* g_metaCollectionPropertySetImplPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::Iterator* iterator, size_t removeCount, ::paf::Variant* value)\n";
-const char* g_metaCollectionPropertyIterateImplPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::UniquePtr<::paf::Iterator>& iterator)\n";
+const char* g_metaCollectionPropertyIterateImplPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::SharedPtr<::paf::Iterator>& iterator)\n";
 
 const char* g_metaStaticSimplePropertyGetImplPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Variant* value)\n";
 const char* g_metaStaticSimplePropertySetImplPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Variant* value)\n";
@@ -747,7 +711,7 @@ const char* g_metaStaticArrayPropertySizeImplPostfix = "(::paf::StaticProperty* 
 
 const char* g_metaStaticCollectionPropertyGetImplPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Iterator* iterator, ::paf::Variant* value)\n";
 const char* g_metaStaticCollectionPropertySetImplPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Iterator* iterator, size_t removeCount, ::paf::Variant* value)\n";
-const char* g_metaStaticCollectionPropertyIterateImplPostfix = "(::paf::StaticProperty* staticProperty, ::paf::UniquePtr<::paf::Iterator>& iterator)\n";
+const char* g_metaStaticCollectionPropertyIterateImplPostfix = "(::paf::StaticProperty* staticProperty, ::paf::SharedPtr<::paf::Iterator>& iterator)\n";
 
 
 
@@ -815,18 +779,6 @@ void writeMetaPropertyGetImpl(ClassNode* classNode, TemplateArguments* templateA
 		break;
 	case tc_raw_array:
 		writeStringToFile("value->assignRawArray(", file, indentation + 1);
-		break;
-	case tc_borrowed_ptr:
-		writeStringToFile("value->assignBorrowedPtr(", file, indentation + 1);
-		break;
-	case tc_borrowed_array:
-		writeStringToFile("value->assignBorrowedArray(", file, indentation + 1);
-		break;
-	case tc_unique_ptr:
-		writeStringToFile("value->assignUniquePtr(", file, indentation + 1);
-		break;
-	case tc_unique_array:
-		writeStringToFile("value->assignUniqueArray(", file, indentation + 1);
 		break;
 	case tc_shared_ptr:
 		writeStringToFile("value->assignSharedPtr(", file, indentation + 1);
@@ -989,44 +941,16 @@ void writeMetaPropertySetImpl(ClassNode* classNode, TemplateArguments* templateA
 	}
 	else if (tc_raw_ptr == propertyNode->m_set->m_typeCompound)
 	{
-		sprintf_s(buf, "::paf::RawPtr<%s> arg;\n", typeName.c_str());
+		sprintf_s(buf, "%s* arg;\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!value->castToRawPtr<%s>(arg))\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 	}
 	else if (tc_raw_array == propertyNode->m_set->m_typeCompound)
 	{
-		sprintf_s(buf, "::paf::RawArray<%s> arg;\n", typeName.c_str());
+		sprintf_s(buf, "::paf::array_t<%s> arg;\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!value->castToRawArray<%s>(arg))\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_borrowed_ptr == propertyNode->m_set->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::BorrowedPtr<%s> arg;\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!value->castToBorrowedPtr<%s>(arg))\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_borrowed_array == propertyNode->m_set->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::BorrowedArray<%s> arg;\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!value->castToBorrowedArray<%s>(arg))\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_unique_ptr == propertyNode->m_set->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::UniquePtr<%s> arg;\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!value->castToUniquePtr<%s>(arg))\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_unique_array == propertyNode->m_set->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::UniqueArray<%s> arg;\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!value->castToUniqueArray<%s>(arg))\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 	}
 	else if (tc_shared_ptr == propertyNode->m_set->m_typeCompound)
@@ -1260,18 +1184,6 @@ void writeMetaMethodImpl_Call(ClassNode* classNode, TemplateArguments* templateA
 			break;
 		case tc_raw_array:
 			writeStringToFile("result->assignRawArray(", file, indentation + 1);
-			break;
-		case tc_borrowed_ptr:
-			writeStringToFile("result->assignBorrowedPtr(", file, indentation + 1);
-			break;
-		case tc_borrowed_array:
-			writeStringToFile("result->assignBorrowedArray(", file, indentation + 1);
-			break;
-		case tc_unique_ptr:
-			writeStringToFile("result->assignUniquePtr(", file, indentation + 1);
-			break;
-		case tc_unique_array:
-			writeStringToFile("result->assignUniqueArray(", file, indentation + 1);
 			break;
 		case tc_shared_ptr:
 			writeStringToFile("result->assignSharedPtr(", file, indentation + 1);
@@ -2677,18 +2589,6 @@ void writeInterfaceMethodImpl_AssignParam(ParameterNode* parameterNode, size_t a
 	case tc_raw_array:
 		sprintf_s(buf, "__arguments__[%zd].assignRawArray<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
 		break;
-	case tc_borrowed_ptr:
-		sprintf_s(buf, "__arguments__[%zd].assignBorrowedPtr<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
-		break;
-	case tc_borrowed_array:
-		sprintf_s(buf, "__arguments__[%zd].assignBorrowedArray<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
-		break;
-	case tc_unique_ptr:
-		sprintf_s(buf, "__arguments__[%zd].assignUniquePtr<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
-		break;
-	case tc_unique_array:
-		sprintf_s(buf, "__arguments__[%zd].assignUniqueArray<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
-		break;
 	case tc_shared_ptr:
 		sprintf_s(buf, "__arguments__[%zd].assignSharedPtr<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
 		break;
@@ -2808,18 +2708,6 @@ void writeInterfaceMethodImpl_CastResult(MethodNode* methodNode, FILE* file, int
 			break;
 		case tc_raw_array:
 			sprintf_s(buf, "__result__.castToRawArray<%s>(__res__);\n", typeName.c_str());
-			break;
-		case tc_borrowed_ptr:
-			sprintf_s(buf, "__result__.castToBorrowedPtr<%s>(__res__);\n", typeName.c_str());
-			break;
-		case tc_borrowed_array:
-			sprintf_s(buf, "__result__.castToBorrowedArray<%s>(__res__);\n", typeName.c_str());
-			break;
-		case tc_unique_ptr:
-			sprintf_s(buf, "__result__.castToUniquePtr<%s>(__res__);\n", typeName.c_str());
-			break;
-		case tc_unique_array:
-			sprintf_s(buf, "__result__.castToUniqueArray<%s>(__res__);\n", typeName.c_str());
 			break;
 		case tc_shared_ptr:
 			sprintf_s(buf, "__result__.castToSharedPtr<%s>(__res__);\n", typeName.c_str());

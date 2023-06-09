@@ -134,10 +134,8 @@ typeAlias				: TYPEDEF typeName IDENTIFY ';'						{$$ = newTypedef($1, $3, $2);}
 
 field_0					: typeName IDENTIFY									{$$ = newField($1, tc_none, $2);}
 						| typeName '*' IDENTIFY								{$$ = newField($1, tc_raw_ptr, $3);}
-						| typeName '+' IDENTIFY								{$$ = newField($1, tc_borrowed_ptr, $3);}
 						| typeName '^' IDENTIFY								{$$ = newField($1, tc_shared_ptr, $3);}
 						| typeName '[' ']' '*' IDENTIFY						{$$ = newField($1, tc_raw_array, $5);}
-						| typeName '[' ']' '+' IDENTIFY						{$$ = newField($1, tc_borrowed_array, $5);}
 						| typeName '[' ']' '^' IDENTIFY						{$$ = newField($1, tc_shared_array, $5);}
 ;
 
@@ -157,12 +155,8 @@ field					: field_2 ';'										{$$ = $1; setFieldSemicolon($$, $2);}
 
 getter_0				: GET												{$$ = newGetter($1, tc_none);}
 						| GET '*'											{$$ = newGetter($1, tc_raw_ptr);}
-						| GET '+'											{$$ = newGetter($1, tc_borrowed_ptr);}
-						| GET '!'											{$$ = newGetter($1, tc_unique_ptr);}
 						| GET '^'											{$$ = newGetter($1, tc_shared_ptr);}
 						| GET '[' ']' '*'									{$$ = newGetter($1, tc_raw_array);}
-						| GET '[' ']' '+'									{$$ = newGetter($1, tc_borrowed_array);}
-						| GET '[' ']' '!'									{$$ = newGetter($1, tc_unique_array);}
 						| GET '[' ']' '^'									{$$ = newGetter($1, tc_shared_array);}
 ;
 
@@ -179,12 +173,8 @@ getter					: getter_1											{$$ = $1;}
 
 setter_0				: SET												{$$ = newSetter($1, tc_none);}
 						| SET '*'											{$$ = newSetter($1, tc_raw_ptr);}
-						| SET '+'											{$$ = newSetter($1, tc_borrowed_ptr);}
-						| SET '!'											{$$ = newSetter($1, tc_unique_ptr);}
 						| SET '^'											{$$ = newSetter($1, tc_shared_ptr);}
 						| SET '[' ']' '*'									{$$ = newSetter($1, tc_raw_array);}
-						| SET '[' ']' '+'									{$$ = newSetter($1, tc_borrowed_array);}
-						| SET '[' ']' '!'									{$$ = newSetter($1, tc_unique_array);}
 						| SET '[' ']' '^'									{$$ = newSetter($1, tc_shared_array);}
 ;
 
@@ -218,12 +208,8 @@ property				: property_1										{$$ = $1;}
 
 parameter_0				: typeName											{$$ = newParameter($1, tc_none);}
 						| typeName '*'										{$$ = newParameter($1, tc_raw_ptr);}
-						| typeName '+'										{$$ = newParameter($1, tc_borrowed_ptr);}
-						| typeName '!'										{$$ = newParameter($1, tc_unique_ptr);}
 						| typeName '^'										{$$ = newParameter($1, tc_shared_ptr);}
 						| typeName '[' ']' '*'								{$$ = newParameter($1, tc_raw_array);}
-						| typeName '[' ']' '+'								{$$ = newParameter($1, tc_borrowed_array);}
-						| typeName '[' ']' '!'								{$$ = newParameter($1, tc_unique_array);}
 						| typeName '[' ']' '^'								{$$ = newParameter($1, tc_shared_array);}
 ;
 
@@ -256,12 +242,8 @@ method_1				: method_0											{$$ = $1;}
 						| VOID method_0										{$$ = $2; setMethodVoidResult($$, $1);}
 						| typeName method_0									{$$ = $2; setMethodResult($$, $1, tc_none);}
 						| typeName '*' method_0								{$$ = $3; setMethodResult($$, $1, tc_raw_ptr);}
-						| typeName '+' method_0								{$$ = $3; setMethodResult($$, $1, tc_borrowed_ptr);}
-						| typeName '!' method_0								{$$ = $3; setMethodResult($$, $1, tc_unique_ptr);}
 						| typeName '^' method_0								{$$ = $3; setMethodResult($$, $1, tc_shared_ptr);}
 						| typeName '[' ']' '*' method_0						{$$ = $5; setMethodResult($$, $1, tc_raw_array);}
-						| typeName '[' ']' '+' method_0						{$$ = $5; setMethodResult($$, $1, tc_borrowed_array);}
-						| typeName '[' ']' '!' method_0						{$$ = $5; setMethodResult($$, $1, tc_unique_array);}
 						| typeName '[' ']' '^' method_0						{$$ = $5; setMethodResult($$, $1, tc_shared_array);}
 ;
 
@@ -288,12 +270,8 @@ delegate_0				: IDENTIFY '(' ')' ';'									{$$ = newDelegate($1, $2, NULL, $3,
 delegate_1				: delegate_0											{$$ = $1;}
 						| typeName delegate_0									{$$ = $2; setDelegateResult($$, $1, tc_none);}
 						| typeName '*' delegate_0								{$$ = $3; setDelegateResult($$, $1, tc_raw_ptr);}
-						| typeName '+' delegate_0								{$$ = $3; setDelegateResult($$, $1, tc_borrowed_ptr);}
-						| typeName '!' delegate_0								{$$ = $3; setDelegateResult($$, $1, tc_unique_ptr);}
 						| typeName '^' delegate_0								{$$ = $3; setDelegateResult($$, $1, tc_shared_ptr);}
 						| typeName '[' ']' '*' delegate_0						{$$ = $5; setDelegateResult($$, $1, tc_raw_array);}
-						| typeName '[' ']' '+' delegate_0						{$$ = $5; setDelegateResult($$, $1, tc_borrowed_array);}
-						| typeName '[' ']' '!' delegate_0						{$$ = $5; setDelegateResult($$, $1, tc_unique_array);}
 						| typeName '[' ']' '^' delegate_0						{$$ = $5; setDelegateResult($$, $1, tc_shared_array);}
 ;
 

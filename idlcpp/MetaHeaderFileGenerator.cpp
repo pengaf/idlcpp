@@ -40,23 +40,11 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	std::string name;
 	switch (typeCompound)
 	{
-	case tc_raw_ptr:
-		name = "::paf::RawPtr<";
-		break;
+	//case tc_raw_ptr:
+	//	name = "::paf::RawPtr<";
+	//	break;
 	case tc_raw_array:
-		name = "::paf::RawArray<";
-		break;
-	case tc_borrowed_ptr:
-		name = "::paf::BorrowedPtr<";
-		break;
-	case tc_borrowed_array:
-		name = "::paf::BorrowedArray<";
-		break;
-	case tc_unique_ptr:
-		name = "::paf::UniquePtr<";
-		break;
-	case tc_unique_array:
-		name = "::paf::UniqueArray<";
+		name = "::paf::array_t<";
 		break;
 	case tc_shared_ptr:
 		name = "::paf::SharedPtr<";
@@ -72,11 +60,9 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	switch (typeCompound)
 	{
 	case tc_raw_ptr:
+		name += "*";
+		break;
 	case tc_raw_array:
-	case tc_borrowed_ptr:
-	case tc_borrowed_array:
-	case tc_unique_ptr:
-	case tc_unique_array:
 	case tc_shared_ptr:
 	case tc_shared_array:
 		name += ">";
@@ -144,7 +130,7 @@ const char* g_metaArrayPropertySizeDeclPostfix = "(::paf::InstanceProperty* inst
 
 const char* g_metaCollectionPropertyGetDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::Iterator* iterator, ::paf::Variant* value);\n";
 const char* g_metaCollectionPropertySetDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::Iterator* iterator, size_t removeCount, ::paf::Variant* value);\n";
-const char* g_metaCollectionPropertyIterateDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::UniquePtr<::paf::Iterator>& iterator);\n";
+const char* g_metaCollectionPropertyIterateDeclPostfix = "(::paf::InstanceProperty* instanceProperty, ::paf::Variant* that, ::paf::SharedPtr<::paf::Iterator>& iterator);\n";
 
 
 const char* g_metaStaticSimplePropertyGetDeclPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Variant* value);\n";
@@ -156,7 +142,7 @@ const char* g_metaStaticArrayPropertySizeDeclPostfix = "(::paf::StaticProperty* 
 
 const char* g_metaStaticCollectionPropertyGetDeclPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Iterator* iterator, ::paf::Variant* value);\n";
 const char* g_metaStaticCollectionPropertySetDeclPostfix = "(::paf::StaticProperty* staticProperty, ::paf::Iterator* iterator, size_t removeCount, ::paf::Variant* value);\n";
-const char* g_metaStaticCollectionPropertyDeclIteratePostfix = "(::paf::StaticProperty* staticProperty, ::paf::UniquePtr<::paf::Iterator>& iterator);\n";
+const char* g_metaStaticCollectionPropertyDeclIteratePostfix = "(::paf::StaticProperty* staticProperty, ::paf::SharedPtr<::paf::Iterator>& iterator);\n";
 
 
 
@@ -566,15 +552,15 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	{
 		writeStringToFile("public:\n", file, indentation);
 		writeStringToFile("virtual ::paf::ErrorCode placementNew(void* address, ::paf::Variant** args, uint32_t numArgs);\n", file, indentation + 1);
+		writeStringToFile("virtual bool placementNewCopy(void* dst, const void* src) override;\n", file, indentation + 1);
 		writeStringToFile("virtual bool placementNewArray(void* address, size_t count) override;\n", file, indentation + 1);
 		writeStringToFile("virtual bool destruct(void* address) override;\n", file, indentation + 1);
-		writeStringToFile("virtual bool copyConstruct(void* dst, const void* src) override;\n", file, indentation + 1);
 		writeStringToFile("virtual bool copyAssign(void* dst, const void* src) override;\n", file, indentation + 1);
 	
 		if(classNode->needSubclassProxy(templateArguments))
 		{
 			writeStringToFile("public:\n", file, indentation);
-			writeStringToFile("virtual ::paf::UniquePtr<::paf::Introspectable> createSubclassProxy(::paf::SubclassInvoker* subclassInvoker) override;\n", file, indentation + 1);
+			writeStringToFile("virtual ::paf::SharedPtr<::paf::Introspectable> createSubclassProxy(::paf::SubclassInvoker* subclassInvoker) override;\n", file, indentation + 1);
 		}
 	}
 	writeMetaPropertyDecls(classNode, propertyNodes, file, indentation);

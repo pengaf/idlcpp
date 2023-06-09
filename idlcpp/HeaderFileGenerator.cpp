@@ -120,23 +120,11 @@ void generateCode_CompoundTypeName(FILE* file, TypeNameNode* typeNameNode, TypeC
 	writeIndentationsToFile(file, indentation);
 	switch (typeCompound)
 	{
-	case tc_raw_ptr:
-		writeStringToFile("::paf::RawPtr<", file);
-		break;
+	//case tc_raw_ptr:
+	//	writeStringToFile("::paf::RawPtr<", file);
+	//	break;
 	case tc_raw_array:
-		writeStringToFile("::paf::RawArray<", file);
-		break;
-	case tc_borrowed_ptr:
-		writeStringToFile("::paf::BorrowedPtr<", file);
-		break;
-	case tc_borrowed_array:
-		writeStringToFile("::paf::BorrowedArray<", file);
-		break;
-	case tc_unique_ptr:
-		writeStringToFile("::paf::UniquePtr<", file);
-		break;
-	case tc_unique_array:
-		writeStringToFile("::paf::UniqueArray<", file);
+		writeStringToFile("::paf::array_t<", file);
 		break;
 	case tc_shared_ptr:
 		writeStringToFile("::paf::SharedPtr<", file);
@@ -149,11 +137,9 @@ void generateCode_CompoundTypeName(FILE* file, TypeNameNode* typeNameNode, TypeC
 	switch (typeCompound)
 	{
 	case tc_raw_ptr:
+		writeStringToFile("*", file);
+		break;
 	case tc_raw_array:
-	case tc_borrowed_ptr:
-	case tc_borrowed_array:
-	case tc_unique_ptr:
-	case tc_unique_array:
 	case tc_shared_ptr:
 	case tc_shared_array:
 		writeStringToFile(">", file);
