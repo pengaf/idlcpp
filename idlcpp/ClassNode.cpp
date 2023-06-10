@@ -112,7 +112,6 @@ void checkMemberNames(ClassNode* classNode, std::vector<MemberNode*>& memberNode
 
 static void ParseConceptList(
 	IdentifyNode*& categoryNode,
-	bool& sharedFlag,
 	bool& arrayFlag,
 	IdentifyListNode* conceptList)
 {
@@ -143,11 +142,7 @@ static void ParseConceptList(
 	conceptList->collectIdentifyNodes(identifyNodes);
 	for (IdentifyNode* identifyNode : identifyNodes)
 	{
-		if (identifyNode->m_str == "shared")
-		{
-			sharedFlag = true;
-		}
-		else if (identifyNode->m_str == "array")
+		if (identifyNode->m_str == "array")
 		{
 			arrayFlag = true;
 		}
@@ -187,10 +182,9 @@ ClassNode::ClassNode(TokenNode* keyword, IdentifyListNode* conceptList, Identify
 	m_typeNode = 0;
 	m_category = 0;
 
-	m_sharedFlag = false;
 	m_arrayFlag = false;
 
-	ParseConceptList(m_category, m_sharedFlag, m_arrayFlag, conceptList);
+	ParseConceptList(m_category, m_arrayFlag, conceptList);
 	m_override = false;
 
 	m_typeCategory = object_type;
@@ -266,7 +260,7 @@ void ClassNode::generateCreateInstanceMethod(const char* methodName, MethodNode*
 	ScopeNameListNode* scopeNameList = (ScopeNameListNode*)newScopeNameList(0, scopeName);
 	TypeNameNode* typeName = (TypeNameNode*)newTypeName(scopeNameList);
 
-	setMethodResult(method, typeName, m_sharedFlag ? tc_shared_ptr : tc_unique_ptr);
+	setMethodResult(method, typeName, tc_shared_ptr);
 	TokenNode* modifier = (TokenNode*)newToken(snt_keyword_static);
 	setMethodModifier(method, modifier);
 	//if (constructor->m_filterNode)
@@ -292,7 +286,7 @@ void ClassNode::generateCreateArrayMethod(const char* methodName, MethodNode* co
 	ScopeNameNode* scopeName = (ScopeNameNode*)newScopeName(m_name, 0, 0, 0);
 	ScopeNameListNode* scopeNameList = (ScopeNameListNode*)newScopeNameList(0, scopeName);
 	TypeNameNode* typeName = (TypeNameNode*)newTypeName(scopeNameList);
-	setMethodResult(method, typeName, m_sharedFlag ? tc_shared_array : tc_unique_array);
+	setMethodResult(method, typeName, tc_shared_array);
 	TokenNode* modifier = (TokenNode*)newToken(snt_keyword_static);
 	setMethodModifier(method, modifier);
 	//if (constructor->m_filterNode)

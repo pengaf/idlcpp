@@ -54,10 +54,6 @@ enum TypeCompound
 	tc_none,
 	tc_raw_ptr,
 	tc_raw_array,
-	tc_borrowed_ptr,
-	tc_borrowed_array,
-	tc_unique_ptr,
-	tc_unique_array,
 	tc_shared_ptr,
 	tc_shared_array,
 };

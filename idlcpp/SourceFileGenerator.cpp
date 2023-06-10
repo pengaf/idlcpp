@@ -507,26 +507,12 @@ void SourceFileGenerator::generateCode_AdditionalMethod(FILE* file, MethodNode* 
 	ClassNode* classNode = static_cast<ClassNode*>(methodNode->m_enclosing);
 	if ("New" == methodNode->m_name->m_str)
 	{
-		if (classNode->m_sharedFlag)
-		{
-			sprintf_s(wrappedTypeName, "::paf::SharedPtr<%s>", typeName.c_str());
-		}
-		else
-		{
-			sprintf_s(wrappedTypeName, "::paf::UniquePtr<%s>", typeName.c_str());
-		}
+		sprintf_s(wrappedTypeName, "::paf::SharedPtr<%s>", typeName.c_str());
 	}
 	else
 	{
 		assert("NewArray" == methodNode->m_name->m_str);
-		if (classNode->m_sharedFlag)
-		{
-			sprintf_s(wrappedTypeName, "::paf::SharedArray<%s>", typeName.c_str());
-		}
-		else
-		{
-			sprintf_s(wrappedTypeName, "::paf::UniqueArray<%s>", typeName.c_str());
-		}
+		sprintf_s(wrappedTypeName, "::paf::SharedArray<%s>", typeName.c_str());
 	}
 
 	bool isInline = 0 != classNode->m_templateParametersNode;

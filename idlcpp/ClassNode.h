@@ -36,7 +36,6 @@ struct ClassNode : ScopeNode
 	std::vector<MethodNode*> m_additionalMethods;
 	TypeCategory m_typeCategory;
 	bool m_override;
-	bool m_sharedFlag;
 	bool m_arrayFlag;
 public:
 	ClassNode(TokenNode* keyword, IdentifyListNode* conceptList, IdentifyNode* name);
