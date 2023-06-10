@@ -29,9 +29,9 @@
 
 void generateCode_Token(FILE* file, TokenNode* tokenNode, int indentation);
 void generateCode_Identify(FILE* file, IdentifyNode* identifyNode, int indentation, bool addSpace = true);
-void generateCode_Parameter(FILE* file, ParameterNode* parameterNode, ScopeNode* scopeNode);
+void generateCode_Parameter(FILE* file, MethodNode* methodNode, ParameterNode* parameterNode, ScopeNode* scopeNode);
 //void generateCode_CompoundTypeName(FILE* file, TypeNameNode* typeNameNode, TypeCompound typeCompound, ScopeNode* scopeNode, bool addKeyword, int indentation);
-void generateCode_ParameterList(FILE* file, ParameterListNode* parameterListNode, ScopeNode* scopeNode);
+void generateCode_ParameterList(FILE* file, MethodNode* methodNode, ParameterListNode* parameterListNode, ScopeNode* scopeNode);
 void writeInterfaceMethodImpl_AssignInputParam(ParameterNode* parameterNode, size_t argIndex, FILE* file, int indentation);
 void writeInterfaceMethodImpl_SetOutputParamType(ParameterNode* parameterNode, size_t argIndex, FILE* file, int indentation);
 void writeInterfaceMethodImpl_CastOutputParam(ParameterNode* parameterNode, size_t argIndex, FILE* file, int indentation);
@@ -564,7 +564,7 @@ void SourceFileGenerator::generateCode_AdditionalMethod(FILE* file, MethodNode* 
 		{
 			writeStringToFile(", ", file);
 		}
-		generateCode_Parameter(file, parameterNodes[i], classNode->m_enclosing);
+		generateCode_Parameter(file, methodNode, parameterNodes[i], classNode->m_enclosing);
 	}
 	generateCode_Token(file, methodNode->m_rightParenthesis, 0);
 	writeStringToFile("\n", file);

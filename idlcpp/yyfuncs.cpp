@@ -25,6 +25,7 @@
 #include "ParameterNode.h"
 #include "ParameterListNode.h"
 #include "MethodNode.h"
+#include "OperatorNode.h"
 #include "TokenListNode.h"
 #include "MemberListNode.h"
 #include "ClassNode.h"
@@ -125,6 +126,7 @@ void setAttributeList(SyntaxNode* member, SyntaxNode* attributeList)
 	assert(snt_field == member->m_nodeType
 		|| snt_property == member->m_nodeType
 		|| snt_method == member->m_nodeType
+		|| snt_operator == member->m_nodeType
 		|| snt_class == member->m_nodeType
 		|| snt_enum == member->m_nodeType
 		|| snt_template_class_instance == member->m_nodeType
@@ -237,6 +239,7 @@ void setMemberFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode)
 	assert(snt_field == syntaxNode->m_nodeType
 		|| snt_property == syntaxNode->m_nodeType
 		|| snt_method == syntaxNode->m_nodeType
+		|| snt_operator == syntaxNode->m_nodeType
 		|| snt_class == syntaxNode->m_nodeType
 		|| snt_delegate == syntaxNode->m_nodeType
 		|| snt_enum == syntaxNode->m_nodeType
@@ -319,7 +322,7 @@ void setGetterPassing(SyntaxNode* syntaxNode, ParameterPassing passing)
 
 SyntaxNode* newSetter(SyntaxNode* keyword, TypeCompound typeCompound)
 {
-	assert(snt_keyword_get == keyword->m_nodeType);
+	assert(snt_keyword_set == keyword->m_nodeType);
 	SetterNode* res = new SetterNode((TokenNode*)keyword, typeCompound);
 	g_syntaxNodes.push_back(res);
 	return res;
@@ -456,12 +459,36 @@ void setMethodSemicolon(SyntaxNode* syntaxNode, SyntaxNode* semicolon)
 	methodNode->m_semicolon = (TokenNode*)semicolon;
 }
 
+SyntaxNode* newAssignOperator(SyntaxNode* keyword, SyntaxNode* sign, SyntaxNode* leftParenthesis, SyntaxNode* paramTypeName, ParameterPassing paramPassing, SyntaxNode* rightParenthesis, SyntaxNode* semicolon)
+{
+	assert(snt_keyword_operator == keyword->m_nodeType && '=' == sign->m_nodeType);
+	assert('(' == leftParenthesis->m_nodeType && ')' == rightParenthesis->m_nodeType && ';' == semicolon->m_nodeType);
+	assert(snt_type_name == paramTypeName->m_nodeType);
+	AssignOperatorNode* res = new AssignOperatorNode((TokenNode*)keyword, (TokenNode*)sign, (TokenNode*)leftParenthesis, (TypeNameNode*)paramTypeName, paramPassing,
+		(TokenNode*)rightParenthesis, (TokenNode*)semicolon);
+	g_syntaxNodes.push_back(res);
+	return res;
+}
+
+SyntaxNode* newCastOperator(SyntaxNode* keyword, SyntaxNode* resultTypeName, SyntaxNode* leftParenthesis, SyntaxNode* rightParenthesis, SyntaxNode* constant, SyntaxNode* semicolon)
+{
+	assert(snt_keyword_operator == keyword->m_nodeType);
+	assert(snt_type_name == resultTypeName->m_nodeType);
+	assert('(' == leftParenthesis->m_nodeType && ')' == rightParenthesis->m_nodeType && ';' == semicolon->m_nodeType);
+	assert(snt_keyword_const == constant->m_nodeType);
+	CastOperatorNode* res = new CastOperatorNode((TokenNode*)keyword, (TypeNameNode*)resultTypeName, (TokenNode*)leftParenthesis,
+		(TokenNode*)rightParenthesis, (TokenNode*)constant, (TokenNode*)semicolon);
+	g_syntaxNodes.push_back(res);
+	return res;
+}
+
 SyntaxNode* newClassMemberList(SyntaxNode* memberList, SyntaxNode* member)
 {
 	assert(0 == memberList || snt_member_list == memberList->m_nodeType);
 	assert(snt_field == member->m_nodeType 
 		|| snt_property == member->m_nodeType 
 		|| snt_method == member->m_nodeType 
+		|| snt_operator == member->m_nodeType
 		|| snt_class == member->m_nodeType
 		|| snt_delegate == member->m_nodeType
 		|| snt_enum == member->m_nodeType

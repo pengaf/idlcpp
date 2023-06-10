@@ -72,7 +72,7 @@ int yyHasDelegate = 0;
 ":"	|
 "?"				{yylval.sn = newToken(yytext[0]);							yycolumnno++; yytokenno++; return yytext[0];}
 
-"&&"			{yylval.sn = newToken(snt_operator_right_reference);		yycolumnno += (int)strlen(yytext); yytokenno++; return RIGHT_VALUE_REFERENCE;}
+"&&"			{yylval.sn = newToken(snt_operator_right_reference);		yycolumnno += (int)strlen(yytext); yytokenno++; return RVALUE_REFERENCE;}
 "::"			{yylval.sn = newToken(snt_operator_scope);					yycolumnno += (int)strlen(yytext); yytokenno++; return SCOPE;}
 
 "bool"			{yylval.sn = newToken(snt_keyword_bool);					yycolumnno += (int)strlen(yytext); yytokenno++; return BOOL;}
@@ -94,6 +94,7 @@ int yyHasDelegate = 0;
 "virtual"		{yylval.sn = newToken(snt_keyword_virtual);					yycolumnno += (int)strlen(yytext); yytokenno++; return VIRTUAL;}
 "static"		{yylval.sn = newToken(snt_keyword_static);					yycolumnno += (int)strlen(yytext); yytokenno++; return STATIC;}
 "const"			{yylval.sn = newToken(snt_keyword_const);					yycolumnno += (int)strlen(yytext); yytokenno++; return CONST;}
+"operator"		{yylval.sn = newToken(snt_keyword_operator);				yycolumnno += (int)strlen(yytext); yytokenno++; return OPERATOR;}
 "typedef"		{yylval.sn = newToken(snt_keyword_typedef);					yycolumnno += (int)strlen(yytext); yytokenno++; return TYPEDEF;}
 "typename"		{yylval.sn = newToken(snt_keyword_typename);				yycolumnno += (int)strlen(yytext); yytokenno++; return TYPENAME;}
 "get"			{yylval.sn = newToken(snt_keyword_get);						yycolumnno += (int)strlen(yytext); yytokenno++; return GET;}

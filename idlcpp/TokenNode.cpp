@@ -18,6 +18,7 @@ const char* g_keywordTokens[] =
 	"virtual ",
 	"static ",
 	"const ",
+	"operator ",
 	"get_",
 	"void set_",
 	"typedef ",

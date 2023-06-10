@@ -1,5 +1,6 @@
 #include "Utility.h"
 #include "SourceFile.h"
+#include <algorithm>
 
 SourceFile::~SourceFile()
 {
@@ -8,6 +9,26 @@ SourceFile::~SourceFile()
 	{
 		delete m_embededCodes[i];
 	}
+}
+
+struct CompareEmbededCode
+{
+	bool operator () (const EmbededCode* lhs, const EmbededCode* rhs) const
+	{
+		return lhs->m_tokenNo < rhs->m_tokenNo;
+	}
+};
+
+EmbededCode* SourceFile::getEmbededCode(int tokenNo)
+{
+	EmbededCode dummy;
+	dummy.m_tokenNo = tokenNo;
+	auto it = std::lower_bound(m_embededCodes.begin(), m_embededCodes.end(), &dummy, CompareEmbededCode());
+	if (it != m_embededCodes.end() && tokenNo == (*it)->m_tokenNo)
+	{
+		return *it;
+	}
+	return nullptr;
 }
 
 void SourceFile::addEmbededCodeBlock(const char* str, int tokenNo)

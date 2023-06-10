@@ -24,6 +24,7 @@ public:
 	~SourceFile();
 public:
 	void addEmbededCodeBlock(const char* str, int tokenNo);
+	EmbededCode* getEmbededCode(int tokenNo);
 	void outputEmbededCodes(FILE* file, int tokenNo);
 public:
 	std::string m_fileName;

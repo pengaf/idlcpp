@@ -274,6 +274,7 @@ void ClassNode::generateCreateInstanceMethod(const char* methodName, MethodNode*
 	//	method->m_filterNode = (TokenNode*)newToken(constructor->m_filterNode->m_nodeType);
 	//}
 	method->m_enclosing = this;
+	method->m_additional = true;
 	m_additionalMethods.push_back(method);
 }
 
@@ -299,6 +300,7 @@ void ClassNode::generateCreateArrayMethod(const char* methodName, MethodNode* co
 	//	method->m_filterNode = (TokenNode*)newToken(constructor->m_filterNode->m_nodeType);
 	//}
 	method->m_enclosing = this;
+	method->m_additional = true;
 	m_additionalMethods.push_back(method);
 }
 

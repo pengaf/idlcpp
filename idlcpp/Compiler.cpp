@@ -583,7 +583,12 @@ void addSourceFile(const char* fileName)
 	}
 }
 
-const char* getCurrentSourceFileName()
+SourceFile* GetCurrentSourceFile()
+{
+	return g_compiler.m_currentSourceFile;
+}
+
+const char* GetCurrentSourceFileName()
 {
 	const char* res = "";
 	if (g_compiler.m_currentSourceFile)

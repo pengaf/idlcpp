@@ -120,7 +120,7 @@ T* TypeNode::TypeNodeContainer::addTypeNode(TypeNode* enclosing, const std::stri
 		sprintf_s(buf, "\'%s\' : already defined in %s(%d,%d)",
 			name.c_str(), child->m_sourceFile->m_fileName.c_str(),
 			child->m_identifyNode->m_lineNo, child->m_identifyNode->m_columnNo);
-		ErrorList_AddItem(getCurrentSourceFileName(), identifyNode->m_lineNo,
+		ErrorList_AddItem(GetCurrentSourceFileName(), identifyNode->m_lineNo,
 			identifyNode->m_columnNo, semantic_error_type_redefined, buf);
 		return 0;
 	}
@@ -484,7 +484,7 @@ NamespaceTypeNode* NamespaceTypeNode::addNamespace(NamespaceNode* node)
 		sprintf_s(buf, "\'%s\' : already defined in %s(%d,%d)",
 			node->m_name->m_str.c_str(), child->m_sourceFile->m_fileName.c_str(),
 			child->m_identifyNode->m_lineNo, child->m_identifyNode->m_columnNo);
-		ErrorList_AddItem(getCurrentSourceFileName(), node->m_name->m_lineNo,
+		ErrorList_AddItem(GetCurrentSourceFileName(), node->m_name->m_lineNo,
 			node->m_name->m_columnNo, semantic_error_namespace_redefined, buf);
 		return 0;
 	}

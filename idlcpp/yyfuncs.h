@@ -107,6 +107,7 @@ enum SyntaxNodeType
 	snt_keyword_virtual,
 	snt_keyword_static,
 	snt_keyword_const,
+	snt_keyword_operator,
 	snt_keyword_get,
 	snt_keyword_set,
 	snt_keyword_typedef,
@@ -137,6 +138,7 @@ enum SyntaxNodeType
 	snt_field,
 	snt_property,
 	snt_method,
+	snt_operator,
 	snt_class,
 	snt_template_class_instance,
 	snt_delegate,
@@ -215,6 +217,9 @@ void setMethodResult(SyntaxNode* method, SyntaxNode* result, TypeCompound result
 void setMethodModifier(SyntaxNode* method, SyntaxNode* modifier);
 void setMethodOverride(SyntaxNode* method);
 void setMethodSemicolon(SyntaxNode* syntaxNode, SyntaxNode* semicolon);
+
+SyntaxNode* newAssignOperator(SyntaxNode* keyword, SyntaxNode* sign, SyntaxNode* leftParenthesis, SyntaxNode* paramTypeName, ParameterPassing paramPassing, SyntaxNode* rightParenthesis, SyntaxNode* semicolon);
+SyntaxNode* newCastOperator(SyntaxNode* keyword, SyntaxNode* resultTypeName, SyntaxNode* leftParenthesis, SyntaxNode* rightParenthesis, SyntaxNode* constant, SyntaxNode* semicolon);
 
 SyntaxNode* newClassMemberList(SyntaxNode* memberList, SyntaxNode* member);
 SyntaxNode* newClass(SyntaxNode* keyword, SyntaxNode* category, SyntaxNode* name);

@@ -148,35 +148,12 @@ void RaiseError_InterfaceMethodIsNotVirtual(IdentifyNode* node)
 	ErrorList_AddItem_CurrentFile(node->m_lineNo,
 		node->m_columnNo, semantic_error_override_method_must_be_virtual_or_abstract, buf);
 }
-//
-//void RaiseError_MissingFromString(IdentifyNode* node)
-//{
-//	char buf[error_info_buffer_size];
-//	sprintf_s(buf, "\'%s\' : string type must implement fromString method", node->m_str.c_str());
-//	ErrorList_AddItem_CurrentFile(node->m_lineNo,
-//		node->m_columnNo, semantic_error_missing_special_member, buf);
-//}
-//
-//void RaiseError_MissingToString(IdentifyNode* node)
-//{
-//	char buf[error_info_buffer_size];
-//	sprintf_s(buf, "\'%s\' : string type must implement toString method", node->m_str.c_str());
-//	ErrorList_AddItem_CurrentFile(node->m_lineNo,
-//		node->m_columnNo, semantic_error_missing_special_member, buf);
-//}
-//
-//void RaiseError_MissingFromBuffer(IdentifyNode* node)
-//{
-//	char buf[error_info_buffer_size];
-//	sprintf_s(buf, "\'%s\' : buffer type must implement fromBuffer method", node->m_str.c_str());
-//	ErrorList_AddItem_CurrentFile(node->m_lineNo,
-//		node->m_columnNo, semantic_error_missing_special_member, buf);
-//}
-//
-//void RaiseError_MissingToBuffer(IdentifyNode* node)
-//{
-//	char buf[error_info_buffer_size];
-//	sprintf_s(buf, "\'%s\' : buffer type must implement toBuffer method", node->m_str.c_str());
-//	ErrorList_AddItem_CurrentFile(node->m_lineNo,
-//		node->m_columnNo, semantic_error_missing_special_member, buf);
-//}
+
+void RaiseError_MissingDefaultParamCode(IdentifyNode* node)
+{
+	char buf[error_info_buffer_size];
+	sprintf_s(buf, "\'%s\' : missing default parameter value", node->m_str.c_str());
+	ErrorList_AddItem_CurrentFile(node->m_lineNo,
+		node->m_columnNo, semantic_error_missing_default_parameter_value, buf);
+}
+

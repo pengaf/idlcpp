@@ -28,6 +28,7 @@ MethodNode::MethodNode(IdentifyNode* name, TokenNode* leftParenthesis, Parameter
 	m_constant = constant;
 	m_semicolon = 0;
 	m_override = false;
+	m_additional = false;
 	m_parameterCount = size_t(-1);
 	m_firstDefaultParam = size_t(-1);
 }
@@ -88,7 +89,7 @@ size_t MethodNode::getFirstDefaultParameter() const
 		}
 		m_firstDefaultParam = paramCount - defaultCount;
 	}
-	return m_parameterCount;
+	return m_firstDefaultParam;
 }
 
 void MethodNode::checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments)

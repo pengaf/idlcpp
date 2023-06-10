@@ -20,6 +20,7 @@ public:
 	TokenNode* m_constant;
 	TokenNode* m_semicolon;
 	bool m_override;
+	bool m_additional;
 	mutable size_t m_parameterCount;
 	mutable size_t m_firstDefaultParam;
 public:

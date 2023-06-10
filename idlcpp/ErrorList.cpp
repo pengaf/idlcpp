@@ -55,6 +55,7 @@ const char* g_errorStrings[] =
 	"semantic error operator can not be static",
 	"semantic error override method must be virtual or abstract",
 	"semantic error attribute redefined",
+	"semantic error missing default parameter value",
 };
 
 ErrorList::ErrorList()
@@ -109,12 +110,12 @@ void ErrorList_AddItem(const char* fileName, int lineNo, int columnNo, ErrorCode
 
 void ErrorList_AddItem_CurrentFile(ErrorCode errorCode, const char* errorText)
 {
-	g_errorList.addItem(getCurrentSourceFileName(), yylineno, yycolumnno, errorCode, errorText);
+	g_errorList.addItem(GetCurrentSourceFileName(), yylineno, yycolumnno, errorCode, errorText);
 }
 
 void ErrorList_AddItem_CurrentFile(int lineNo, int columnNo, ErrorCode errorCode, const char* errorText)
 {
-	g_errorList.addItem(getCurrentSourceFileName(), lineNo, columnNo, errorCode, errorText);
+	g_errorList.addItem(GetCurrentSourceFileName(), lineNo, columnNo, errorCode, errorText);
 }
 
 size_t ErrorList_ErrorCount()

@@ -4,7 +4,9 @@
 #include <map>
 #include <vector>
 
-const char* getCurrentSourceFileName();
+class SourceFile;
+SourceFile* GetCurrentSourceFile();
+const char* GetCurrentSourceFileName();
 
 const int import_file_failed = -1;
 const int import_file_succeeded = 0;
@@ -24,7 +26,6 @@ struct ProgramNode;
 struct TypeNameNode;
 struct TemplateArguments;
 
-class SourceFile;
 struct TypeNode;
 
 enum TypeUsage

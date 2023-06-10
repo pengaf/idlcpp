@@ -91,11 +91,11 @@ void PropertyNode::checkSemantic(TemplateArguments* templateArguments)
 		return;
 	}
 	bool byValue = false;
-	if (m_set && tc_none == m_set->m_typeCompound)
+	if (m_set && (tc_none == m_set->m_typeCompound && pp_value == m_set->m_passing) )
 	{
 		byValue = true;
 	}
-	if (m_get && tc_none == m_get->m_typeCompound)
+	if (m_get && (tc_none == m_get->m_typeCompound && pp_value == m_get->m_passing))
 	{
 		byValue = true;
 	}

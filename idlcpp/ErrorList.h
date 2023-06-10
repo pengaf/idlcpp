@@ -53,7 +53,7 @@ enum ErrorCode
 	semantic_error_operator_can_not_be_static,
 	semantic_error_override_method_must_be_virtual_or_abstract,
 	semantic_error_attribute_redefined,
-	semantic_error_missing_special_member,
+	semantic_error_missing_default_parameter_value,
 };
 
 typedef enum ErrorCode ErrorCode;

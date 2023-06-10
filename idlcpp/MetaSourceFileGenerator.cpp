@@ -21,6 +21,7 @@
 #include "FieldNode.h"
 #include "PropertyNode.h"
 #include "MethodNode.h"
+#include "OperatorNode.h"
 #include "ParameterNode.h"
 #include "ParameterListNode.h"
 #include "AttributeNode.h"
@@ -106,15 +107,7 @@ void writeMetaMethodImpl_UseParam(ClassNode* classNode, TemplateArguments* templ
 
 	if (tc_none == parameterNode->m_typeCompound)
 	{
-		if ((primitive_type == typeCategory || enum_type == typeCategory || string_type == typeCategory || buffer_type == typeCategory) &&
-			(pp_value == parameterNode->m_passing || pp_const_reference == parameterNode->m_passing || pp_const_rvalue_reference == parameterNode->m_passing))
-		{
-			sprintf_s(strArg, "a%zd", paramIndex);
-		}
-		else
-		{
-			sprintf_s(strArg, "*a%zd", paramIndex);
-		}
+		sprintf_s(strArg, "*a%zd", paramIndex);
 	}
 	else
 	{
@@ -141,60 +134,40 @@ void writeMetaMethodImpl_CastParam(ClassNode* classNode, TemplateArguments* temp
 	std::string typeName;
 	TypeCategory typeCategory = CalcTypeNativeName(typeName, parameterNode->m_typeName, templateArguments);
 
-	const char* argDeference = "";
+	//const char* argDeference = "";
 	if (tc_none == parameterNode->m_typeCompound)
 	{
-		if ((primitive_type == typeCategory || enum_type == typeCategory || string_type == typeCategory || buffer_type == typeCategory) &&
-			(pp_value == parameterNode->m_passing || pp_const_reference == parameterNode->m_passing || pp_const_rvalue_reference == parameterNode->m_passing))
+		if (pp_value == parameterNode->m_passing || pp_const_reference == parameterNode->m_passing 
+			|| pp_rvalue_reference == parameterNode->m_passing || pp_const_rvalue_reference == parameterNode->m_passing)
 		{
-			if (primitive_type == typeCategory)
-			{
-				sprintf_s(buf, "%s a%zd;\n", typeName.c_str(), paramIndex);
-				writeStringToFile(buf, file, indentation + 1);
-				sprintf_s(buf, "if(!args[%zd]->castToPrimitive(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &a%zd))\n", argIndex, typeName.c_str(), paramIndex);
-				writeStringToFile(buf, file, indentation + 1);
-			}
-			else if (enum_type == typeCategory)
-			{
-				sprintf_s(buf, "%s a%zd;\n", typeName.c_str(), paramIndex);
-				writeStringToFile(buf, file, indentation + 1);
-				sprintf_s(buf, "if(!args[%zd]->castToEnum(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &a%zd))\n", argIndex, typeName.c_str(), paramIndex);
-				writeStringToFile(buf, file, indentation + 1);
-			}
-			else if (string_type == typeCategory)
-			{
-				sprintf_s(buf, "%s a%zd;\n", typeName.c_str(), paramIndex);
-				writeStringToFile(buf, file, indentation + 1);
-				sprintf_s(buf, "if(!args[%zd]->castToString(a%zd))\n", argIndex, paramIndex);
-				writeStringToFile(buf, file, indentation + 1);
-			}
-			else if (buffer_type == typeCategory)
-			{
-				sprintf_s(buf, "%s a%zd;\n", typeName.c_str(), paramIndex);
-				writeStringToFile(buf, file, indentation + 1);
-				sprintf_s(buf, "if(!args[%zd]->castToBuffer(a%zd))\n", argIndex, paramIndex);
-				writeStringToFile(buf, file, indentation + 1);
-			}
+			sprintf_s(buf, "%s val%zd, *a%zd;\n", typeName.c_str(), paramIndex, paramIndex);
+			writeStringToFile(buf, file, indentation + 1);
+			sprintf_s(buf, "if(!args[%zd]->castToRawPointerOrValue(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &val%zd, (void**)&a%zd))\n", argIndex, typeName.c_str(), paramIndex, paramIndex);
+			//sprintf_s(buf, "if(!args[%zd]->castToRawPointerOrValue(a%zd))\n", argIndex, paramIndex);
+			writeStringToFile(buf, file, indentation + 1);
 		}
 		else
 		{
 			sprintf_s(buf, "%s* a%zd;\n", typeName.c_str(), paramIndex);
 			writeStringToFile(buf, file, indentation + 1);
 			sprintf_s(buf, "if(!args[%zd]->castToRawPointer(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), (void**)&a%zd))\n", argIndex, typeName.c_str(), paramIndex);
+			//sprintf_s(buf, "if(!args[%zd]->castToRawPointer(a%zd))\n", argIndex, paramIndex);
 			writeStringToFile(buf, file, indentation + 1);
-			argDeference = "*";
 		}
+		//argDeference = "*";
 	}
 	else if (tc_raw_ptr == parameterNode->m_typeCompound)
 	{
-		sprintf_s(buf, "::paf::RawPtr<%s> a%zd;\n", typeName.c_str(), paramIndex);
+		//sprintf_s(buf, "::paf::RawPtr<%s> a%zd;\n", typeName.c_str(), paramIndex);
+		sprintf_s(buf, "%s* a%zd;\n", typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!args[%zd]->castToRawPtr<%s>(a%zd))\n", argIndex, typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
 	}
 	else if (tc_raw_array == parameterNode->m_typeCompound)
 	{
-		sprintf_s(buf, "::paf::RawArray<%s> a%zd;\n", typeName.c_str(), paramIndex);
+		sprintf_s(buf, "::paf::array_t<%s> a%zd;\n", typeName.c_str(), paramIndex);
+		//sprintf_s(buf, "::paf::RawArray<%s> a%zd;\n", typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!args[%zd]->castToRawArray<%s>(a%zd))\n", argIndex, typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
@@ -417,7 +390,10 @@ void writePlacementNew_Call(ClassNode* classNode, TemplateArguments* templateArg
 	writeStringToFile("}\n", file, indentation);
 }
 
-void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArguments, MethodNode* constructor, FILE* file, int indentation)
+void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArguments, MethodNode* constructor, 
+	std::vector<AssignOperatorNode*>& assignOperatorNodes,
+	std::vector<CastOperatorNode*>& castOperatorNodes,
+	FILE* file, int indentation)
 {
 	char buf[4096];
 	std::string metaClassName;
@@ -429,6 +405,25 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 	sprintf_s(buf, "::paf::ErrorCode %s::placementNew(void* address, ::paf::Variant** args, uint32_t numArgs)\n", metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
+
+	writeStringToFile("if(numArgs == 0)\n", file, indentation + 1);
+	writeStringToFile("{\n", file, indentation + 1);
+	sprintf_s(buf, "return ::paf::PlacementNewDefaultCaller<%s>::Call(address) ? ::paf::ErrorCode::s_ok : ::paf::ErrorCode::e_not_implemented;\n", className.c_str());
+	writeStringToFile(buf, file, indentation + 2);
+	writeStringToFile("}\n", file, indentation + 1);
+	writeStringToFile("else if(numArgs == 1)\n", file, indentation + 1);
+	writeStringToFile("{\n", file, indentation + 1);
+	writeStringToFile("void* other;\n", file, indentation + 2);
+	writeStringToFile("if(args[0]->castToRawPointer(this, &other))\n", file, indentation + 2);
+	writeStringToFile("{\n", file, indentation + 2);
+	sprintf_s(buf, "return ::paf::PlacementNewCopyCaller<%s>::Call(address, other) ? ::paf::ErrorCode::s_ok : ::paf::ErrorCode::e_not_implemented;\n", className.c_str());
+	writeStringToFile(buf, file, indentation + 3);
+	writeStringToFile("}\n", file, indentation + 2);
+	if (!constructor)
+	{
+		writeStringToFile("return ::paf::ErrorCode::e_invalid_arg_type_1; \n", file, indentation + 2);
+	}
+	writeStringToFile("}\n", file, indentation + 1);
 	if (constructor)
 	{
 		std::vector<ParameterNode*> parameterNodes;
@@ -460,16 +455,10 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 			writeMetaMethodImpl_CastParam(classNode, templateArguments, parameterNode, argIndex, i, file, indentation);
 		}
 		writePlacementNew_Call(classNode, templateArguments, parameterNodes, paramCount, file, indentation + 1);
-		writeStringToFile("return ::paf::ErrorCode::e_too_many_arguments;\n", file, indentation + 1);
 	}
-	else
-	{
-		sprintf_s(buf, "return ::paf::PlacementNewDefaultCaller<%s>::Call(address) ? ::paf::ErrorCode::s_ok : ::paf::ErrorCode::e_not_implemented;\n", className.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-	}
+	writeStringToFile("return ::paf::ErrorCode::e_too_many_arguments;\n", file, indentation + 1);
+
 	writeStringToFile("}\n\n", file, indentation);
-
-
 	sprintf_s(buf, "bool %s::placementNewArray(void* address, size_t count)\n", metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
@@ -477,26 +466,63 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 	writeStringToFile(buf, file, indentation + 1);
 	writeStringToFile("}\n\n", file, indentation);
 
-	sprintf_s(buf, "bool %s::destruct(void* address)\n", metaClassName.c_str());
+	sprintf_s(buf, "bool %s::destruct(void* self)\n", metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
-	sprintf_s(buf, "return ::paf::DestructorCaller<%s>::Call(address);\n", className.c_str());
+	sprintf_s(buf, "return ::paf::DestructorCaller<%s>::Call(self);\n", className.c_str());
 	writeStringToFile(buf, file, indentation + 1);
 	writeStringToFile("}\n\n", file, indentation);
 
-	sprintf_s(buf, "bool %s::copyConstruct(void* dst, const void* src)\n", metaClassName.c_str());
+	sprintf_s(buf, "bool %s::copyAssign(void* self, const void* src)\n", metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
-	sprintf_s(buf, "return ::paf::CopyConstructorCaller<%s>::Call(dst, src);\n", className.c_str());
+	sprintf_s(buf, "return ::paf::CopyAssignmentCaller<%s>::Call(self, src);\n", className.c_str());
 	writeStringToFile(buf, file, indentation + 1);
 	writeStringToFile("}\n\n", file, indentation);
 
-	sprintf_s(buf, "bool %s::copyAssign(void* dst, const void* src)\n", metaClassName.c_str());
-	writeStringToFile(buf, file, indentation);
-	writeStringToFile("{\n", file, indentation);
-	sprintf_s(buf, "return ::paf::CopyAssignmentCaller<%s>::Call(dst, src);\n", className.c_str());
-	writeStringToFile(buf, file, indentation + 1);
-	writeStringToFile("}\n\n", file, indentation);
+	if (!assignOperatorNodes.empty())
+	{
+		size_t count = assignOperatorNodes.size();
+		sprintf_s(buf, "bool %s::assign(void* self, ::paf::Type* srcType, const void* src)\n", metaClassName.c_str());
+		writeStringToFile(buf, file, indentation);
+		writeStringToFile("{\n", file, indentation);
+		for (size_t i = 0; i < count; ++i)
+		{
+			AssignOperatorNode* assignOperatorNode = assignOperatorNodes[i];
+			std::string typeName;
+			TypeCategory typeCategory = CalcTypeNativeName(typeName, assignOperatorNode->m_paramTypeName, templateArguments);
+			sprintf_s(buf, "if (RuntimeTypeOf<%s>::RuntimeType::GetSingleton() == srcType)\n", typeName.c_str());
+			writeStringToFile(buf, file, indentation + 1);
+			writeStringToFile("{\n", file, indentation + 1);
+			sprintf_s(buf, "return ::paf::AssignmentCaller<%s, %s>::Call(self, src);\n", className.c_str(), typeName.c_str());
+			writeStringToFile(buf, file, indentation + 2);
+			writeStringToFile("}\n", file, indentation + 1);
+		}
+		writeStringToFile("return false;\n", file, indentation + 1);
+		writeStringToFile("}\n\n", file, indentation);
+	}
+
+	if (!castOperatorNodes.empty())
+	{
+		size_t count = castOperatorNodes.size();
+		sprintf_s(buf, "bool %s::cast(::paf::Type* dstType, void* dst, const void* self)\n", metaClassName.c_str());
+		writeStringToFile(buf, file, indentation);
+		writeStringToFile("{\n", file, indentation);
+		for (size_t i = 0; i < count; ++i)
+		{
+			CastOperatorNode* castOperatorNode = castOperatorNodes[i];
+			std::string typeName;
+			TypeCategory typeCategory = CalcTypeNativeName(typeName, castOperatorNode->m_resultTypeName, templateArguments);
+			sprintf_s(buf, "if (RuntimeTypeOf<%s>::RuntimeType::GetSingleton() == dstType)\n", typeName.c_str());
+			writeStringToFile(buf, file, indentation + 1);
+			writeStringToFile("{\n", file, indentation + 1);
+			sprintf_s(buf, "return ::paf::CastCaller<%s, %s>::Call(dst, self);\n", typeName.c_str(), className.c_str());
+			writeStringToFile(buf, file, indentation + 2);
+			writeStringToFile("}\n", file, indentation + 1);
+		}
+		writeStringToFile("return false;\n", file, indentation + 1);
+		writeStringToFile("}\n\n", file, indentation);
+	}
 
 	if (classNode->needSubclassProxy(templateArguments))
 	{
@@ -510,7 +536,6 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 		writeStringToFile("}\n\n", file, indentation);
 	}
 }
-
 
 struct CompareMethodNode
 {
@@ -561,6 +586,8 @@ void MetaSourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	std::vector<FieldNode*> staticFieldNodes;
 	std::vector<MemberNode*> nestedTypeNodes;
 	std::vector<MemberNode*> nestedTypeAliasNodes;
+	std::vector<AssignOperatorNode*> assignOperatorNodes;
+	std::vector<CastOperatorNode*> castOperatorNodes;
 
 	MethodNode* constructor = nullptr;
 
@@ -639,6 +666,18 @@ void MetaSourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 			{
 				nestedTypeAliasNodes.push_back(memberNode);
 			}
+			else if (snt_operator == memberNode->m_nodeType)
+			{
+				switch (static_cast<OperatorNode*>(memberNode)->m_operatorCategory)
+				{
+				case assgin_operator:
+					assignOperatorNodes.push_back(static_cast<AssignOperatorNode*>(memberNode));
+					break;
+				case cast_operator:
+					castOperatorNodes.push_back(static_cast<CastOperatorNode*>(memberNode));
+					break;
+				}
+			}
 			else
 			{
 				assert(false);
@@ -672,9 +711,10 @@ void MetaSourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 		staticFieldNodes, staticPropertyNodes, staticMethodNodes,
 		fieldNodes, propertyNodes, methodNodes, file, indentation);
 
-	if (nullptr == classNode->m_category || classNode->m_category->m_str == "object")
+
+	if (nullptr == classNode->m_category || classNode->m_category->m_str == "object" || classNode->m_category->m_str == "string" || classNode->m_category->m_str == "buffer")
 	{
-		writeOverrideFunction(classNode, templateArguments, constructor, file, indentation);
+		writeOverrideFunction(classNode, templateArguments, constructor, assignOperatorNodes, castOperatorNodes, file, indentation);
 	}
 	writeMetaPropertyImpls(classNode, templateArguments, propertyNodes, file, indentation);
 	writeMetaPropertyImpls(classNode, templateArguments, staticPropertyNodes, file, indentation);
@@ -946,37 +986,13 @@ void writeMetaPropertySetImpl(ClassNode* classNode, TemplateArguments* templateA
 	const char* argDeference = "";
 	if (tc_none == propertyNode->m_set->m_typeCompound)
 	{
-		if( (primitive_type == typeCategory || enum_type == typeCategory || string_type == typeCategory || buffer_type == typeCategory) &&
-			(pp_value == propertyNode->m_set->m_passing || pp_const_reference == propertyNode->m_set->m_passing || pp_const_rvalue_reference == propertyNode->m_set->m_passing))
+		if(pp_value == propertyNode->m_set->m_passing || pp_const_reference == propertyNode->m_set->m_passing
+			|| pp_rvalue_reference == propertyNode->m_set->m_passing || pp_const_rvalue_reference == propertyNode->m_set->m_passing)
 		{
-			if (primitive_type == typeCategory)
-			{
-				sprintf_s(buf, "%s arg;\n", typeName.c_str());
-				writeStringToFile(buf, file, indentation + 1);
-				sprintf_s(buf, "if(!value->castToPrimitive(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &arg))\n", typeName.c_str());
-				writeStringToFile(buf, file, indentation + 1);
-			}
-			else if (enum_type == typeCategory)
-			{
-				sprintf_s(buf, "%s arg;\n", typeName.c_str());
-				writeStringToFile(buf, file, indentation + 1);
-				sprintf_s(buf, "if(!value->castToEnum(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &arg))\n", typeName.c_str());
-				writeStringToFile(buf, file, indentation + 1);
-			}
-			else if (string_type == typeCategory)
-			{
-				sprintf_s(buf, "%s arg;\n", typeName.c_str());
-				writeStringToFile(buf, file, indentation + 1);
-				sprintf_s(buf, "if(!value->castToString(arg))\n");
-				writeStringToFile(buf, file, indentation + 1);
-			}
-			else if (buffer_type == typeCategory)
-			{
-				sprintf_s(buf, "%s arg;\n", typeName.c_str());
-				writeStringToFile(buf, file, indentation + 1);
-				sprintf_s(buf, "if(!value->castToBuffer(arg))\n");
-				writeStringToFile(buf, file, indentation + 1);
-			}
+			sprintf_s(buf, "%s argValue, *arg;\n", typeName.c_str());
+			writeStringToFile(buf, file, indentation + 1);
+			sprintf_s(buf, "if(!value->castToRawPointerOrValue(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), &argValue, (void**)&arg))\n", typeName.c_str());
+			writeStringToFile(buf, file, indentation + 1);
 		}
 		else
 		{
@@ -984,19 +1000,21 @@ void writeMetaPropertySetImpl(ClassNode* classNode, TemplateArguments* templateA
 			writeStringToFile(buf, file, indentation + 1);
 			sprintf_s(buf, "if(!value->castToRawPointer(RuntimeTypeOf<%s>::RuntimeType::GetSingleton(), (void**)&arg))\n", typeName.c_str());
 			writeStringToFile(buf, file, indentation + 1);
-			argDeference = "*";
 		}
+		argDeference = "*";
 	}
 	else if (tc_raw_ptr == propertyNode->m_set->m_typeCompound)
 	{
-		sprintf_s(buf, "::paf::RawPtr<%s> arg;\n", typeName.c_str());
+		sprintf_s(buf, "%s* arg;\n", typeName.c_str());
+		//sprintf_s(buf, "::paf::RawPtr<%s> arg;\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!value->castToRawPtr<%s>(arg))\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 	}
 	else if (tc_raw_array == propertyNode->m_set->m_typeCompound)
 	{
-		sprintf_s(buf, "::paf::RawArray<%s> arg;\n", typeName.c_str());
+		sprintf_s(buf, "::paf::array_t<%s> arg;\n", typeName.c_str());
+		//sprintf_s(buf, "::paf::RawArray<%s> arg;\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!value->castToRawArray<%s>(arg))\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
@@ -2751,51 +2769,11 @@ void writeInterfaceMethodImpl_CastResult(MethodNode* methodNode, FILE* file, int
 	std::string strResultType = CalcCompoundTypeName(methodNode->m_resultTypeName, methodNode->m_resultTypeCompound, pp_value, methodNode->getProgramNode());
 	if (tc_none == methodNode->m_resultTypeCompound)
 	{
-		if (primitive_type == typeCategory)
-		{
-			sprintf_s(buf, "%s __res__{};\n", strResultType.c_str());
-			writeStringToFile(buf, file, indentation);
-			sprintf_s(buf, "__result__.castToPrimitive<%s>(__res__);\n", typeName.c_str());
-			writeStringToFile(buf, file, indentation);
-			writeStringToFile("return __res__;\n", file, indentation);
-		}
-		else if (enum_type == typeCategory)
-		{
-			sprintf_s(buf, "%s __res__{};\n", strResultType.c_str());
-			writeStringToFile(buf, file, indentation);
-			sprintf_s(buf, "__result__.castToEnum<%s>(__res__);\n", typeName.c_str());
-			writeStringToFile(buf, file, indentation);
-			writeStringToFile("return __res__;\n", file, indentation);
-		}
-		else if (string_type == typeCategory)
-		{
-			sprintf_s(buf, "%s __res__{};\n", strResultType.c_str());
-			writeStringToFile(buf, file, indentation);
-			writeStringToFile("__result__.castToString(__res__);\n", file, indentation);
-			writeStringToFile("return __res__;\n", file, indentation);
-		}
-		else if (buffer_type == typeCategory)
-		{
-			sprintf_s(buf, "%s __res__{};\n", strResultType.c_str());
-			writeStringToFile(buf, file, indentation);
-			writeStringToFile("__result__.castToBuffer(__res__);\n", file, indentation);
-			writeStringToFile("return __res__;\n", file, indentation);
-		}
-		else
-		{
-			sprintf_s(buf, "%s* __res__{};\n", strResultType.c_str());
-			writeStringToFile(buf, file, indentation);
-			sprintf_s(buf, "if(__result__.castToRawPointer<%s>(__res__))\n", typeName.c_str());
-			writeStringToFile(buf, file, indentation);
-			writeStringToFile("{\n", file, indentation);
-			writeStringToFile("return __res__;\n", file, indentation + 1);
-			writeStringToFile("}\n", file, indentation);
-			writeStringToFile("else\n", file, indentation);
-			writeStringToFile("{\n", file, indentation);
-			sprintf_s(buf, "return %s();\n", typeName.c_str());
-			writeStringToFile(buf, file, indentation + 1);
-			writeStringToFile("}\n", file, indentation);
-		}
+		sprintf_s(buf, "%s __res__{};\n", strResultType.c_str());
+		writeStringToFile(buf, file, indentation);
+		sprintf_s(buf, "__result__.castToValue<%s>(__res__);\n", typeName.c_str());
+		writeStringToFile(buf, file, indentation);
+		writeStringToFile("return __res__;\n", file, indentation);
 	}
 	else
 	{

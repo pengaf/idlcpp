@@ -20,6 +20,7 @@
 #include "FieldNode.h"
 #include "PropertyNode.h"
 #include "MethodNode.h"
+#include "OperatorNode.h"
 #include "ParameterNode.h"
 #include "ParameterListNode.h"
 #include "TypeTree.h"
@@ -40,11 +41,12 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	std::string name;
 	switch (typeCompound)
 	{
-	case tc_raw_ptr:
-		name = "::paf::RawPtr<";
-		break;
+	//case tc_raw_ptr:
+	//	name = "::paf::RawPtr<";
+	//	break;
 	case tc_raw_array:
-		name = "::paf::RawArray<";
+		//name = "::paf::RawArray<";
+		name = "::paf::array_t<";
 		break;
 	case tc_borrowed_ptr:
 		name = "::paf::BorrowedPtr<";
@@ -72,6 +74,8 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	switch (typeCompound)
 	{
 	case tc_raw_ptr:
+		name += "*";
+		break;
 	case tc_raw_array:
 	case tc_borrowed_ptr:
 	case tc_borrowed_array:
@@ -470,6 +474,8 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	std::vector<PropertyNode*> propertyNodes;
 	std::vector<PropertyNode*> staticPropertyNodes;
 	std::vector<MemberNode*> subTypeNodes;
+	std::vector<AssignOperatorNode*> assignOperatorNodes;
+	std::vector<CastOperatorNode*> castOperatorNodes;
 
 	classNode->m_memberList->collectMemberNodes(memberNodes);
 	size_t memberCount = memberNodes.size();
@@ -524,6 +530,18 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 			{
 				subTypeNodes.push_back(memberNode);
 			}
+			else if (snt_operator == memberNode->m_nodeType)
+			{
+				switch (static_cast<OperatorNode*>(memberNode)->m_operatorCategory)
+				{
+				case assgin_operator:
+					assignOperatorNodes.push_back(static_cast<AssignOperatorNode*>(memberNode));
+					break;
+				case cast_operator:
+					castOperatorNodes.push_back(static_cast<CastOperatorNode*>(memberNode));
+					break;
+				}
+			}
 			else
 			{
 				assert(snt_field == memberNode->m_nodeType);
@@ -562,15 +580,21 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	writeStringToFile(metaClassName.c_str(), metaClassName.length(), file, indentation + 1);
 	writeStringToFile("();\n", file);
 
-	if (nullptr == classNode->m_category || classNode->m_category->m_str == "object")
+	if (nullptr == classNode->m_category || classNode->m_category->m_str == "object" || classNode->m_category->m_str == "string" || classNode->m_category->m_str == "buffer")
 	{
 		writeStringToFile("public:\n", file, indentation);
 		writeStringToFile("virtual ::paf::ErrorCode placementNew(void* address, ::paf::Variant** args, uint32_t numArgs);\n", file, indentation + 1);
 		writeStringToFile("virtual bool placementNewArray(void* address, size_t count) override;\n", file, indentation + 1);
-		writeStringToFile("virtual bool destruct(void* address) override;\n", file, indentation + 1);
-		writeStringToFile("virtual bool copyConstruct(void* dst, const void* src) override;\n", file, indentation + 1);
-		writeStringToFile("virtual bool copyAssign(void* dst, const void* src) override;\n", file, indentation + 1);
-	
+		writeStringToFile("virtual bool destruct(void* self) override;\n", file, indentation + 1);
+		writeStringToFile("virtual bool copyAssign(void* self, const void* src) override;\n", file, indentation + 1);
+		if (!assignOperatorNodes.empty())
+		{
+			writeStringToFile("virtual bool assign(void* self, ::paf::Type* srcType, const void* src) override;\n", file, indentation + 1);
+		}
+		if (!castOperatorNodes.empty())
+		{
+			writeStringToFile("virtual bool cast(::paf::Type* dstType, void* dst, const void* self) override;\n", file, indentation + 1);
+		}
 		if(classNode->needSubclassProxy(templateArguments))
 		{
 			writeStringToFile("public:\n", file, indentation);
