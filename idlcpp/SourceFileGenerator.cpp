@@ -300,7 +300,7 @@ void SourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, c
 		//		writeStringToFile("void* ", file, indentation);
 		//	}
 		//	writeStringToFile(typeName.c_str(), file);
-		//	writeStringToFile("::getAddress()\n", file);
+		//	writeStringToFile("::getMemoryAddress()\n", file);
 		//	writeStringToFile("{\n", file, indentation);
 		//	writeStringToFile("return this;\n", file, indentation + 1);
 		//	writeStringToFile("}\n\n", file, indentation);

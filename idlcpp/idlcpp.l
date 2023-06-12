@@ -54,8 +54,6 @@ int yyHasDelegate = 0;
 \#[a-zA-Z_0-9]+		{newCodeBlock(yytext + 1); yycolumnno += (int)strlen(yytext); yytokenno++;}
 
 "*" |
-"+" |
-"!" |
 "^" |
 "&" |
 "=" |
@@ -115,7 +113,7 @@ u8\"[^\"]*\"			{yylval.sn = newString(yytext + 3);					yycolumnno += (int)strlen
 [ \t]							{++yycolumnno;}
 "\n"							{newCodeBlock(yytext); yycolumnno = 1;}
 
-[^ ,;:{}\[\]<>()&*^$"/+%^|!~=?\-\t\n]*		{invalidString(yytext); yycolumnno += (int)strlen(yytext);}
+[^# ,;:{}\[\]<>()&*^$"/+%^|!~=?\-\t\n]*		{invalidString(yytext); yycolumnno += (int)strlen(yytext);}
 .								{invalidString(yytext); yycolumnno += (int)strlen(yytext);}
 
 %%
