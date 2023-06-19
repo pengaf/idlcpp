@@ -11,7 +11,6 @@ YY_BUFFER_STATE createBufferState(FILE* file);
 int yytokenno = 0;
 int yycolumnno = 1;
 int yyHasCollectionProperty = 0;
-int yyHasDelegate = 0;
 %}
 
 %%
@@ -70,7 +69,6 @@ int yyHasDelegate = 0;
 ":"	|
 "?"				{yylval.sn = newToken(yytext[0]);							yycolumnno++; yytokenno++; return yytext[0];}
 
-"&&"			{yylval.sn = newToken(snt_operator_right_reference);		yycolumnno += (int)strlen(yytext); yytokenno++; return RVALUE_REFERENCE;}
 "::"			{yylval.sn = newToken(snt_operator_scope);					yycolumnno += (int)strlen(yytext); yytokenno++; return SCOPE;}
 
 "bool"			{yylval.sn = newToken(snt_keyword_bool);					yycolumnno += (int)strlen(yytext); yytokenno++; return BOOL;}
@@ -102,7 +100,6 @@ int yyHasDelegate = 0;
 "export"		{yylval.sn = newToken(snt_keyword_export);					yycolumnno += (int)strlen(yytext); yytokenno++; return EXPORT;}
 "override"		{yylval.sn = newToken(snt_keyword_override);				yycolumnno += (int)strlen(yytext); yytokenno++; return OVERRIDE;}
 "template"		{yylval.sn = newToken(snt_keyword_template);				yycolumnno += (int)strlen(yytext); yytokenno++; return TEMPLATE;}
-"delegate"		{yylval.sn = newToken(snt_keyword_delegate);				yycolumnno += (int)strlen(yytext); yytokenno++; return DELEGATE;}
 
 
 [a-zA-Z_][a-zA-Z_0-9]*	{yylval.sn = newIdentify(yytext);					yycolumnno += (int)strlen(yytext); yytokenno++; return IDENTIFY;}

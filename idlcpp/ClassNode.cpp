@@ -22,7 +22,6 @@
 #include "Options.h"
 #include "Compiler.h"
 #include "TypeTree.h"
-#include "DelegateNode.h"
 
 #include <assert.h>
 #include <vector>
@@ -98,7 +97,7 @@ void checkMemberNames(ClassNode* classNode, std::vector<MemberNode*>& memberNode
 					ErrorList_AddItem_CurrentFile(identify->m_lineNo,
 						identify->m_columnNo, semantic_error_constructor_with_modifier, buf);
 				}
-				if (0 != methodNode->m_resultTypeName)
+				if (0 != methodNode->m_voidResult || 0 != methodNode->m_resultList)
 				{
 					char buf[4096];
 					sprintf_s(buf, "\'%s\' : constructor with return type", identify->m_str.c_str());
@@ -164,8 +163,7 @@ static void ParseConceptList(
 ClassNode::ClassNode(TokenNode* keyword, IdentifyListNode* conceptList, IdentifyNode* name)
 {
 	assert(snt_keyword_struct == keyword->m_nodeType 
-		|| snt_keyword_class == keyword->m_nodeType 
-		|| snt_keyword_delegate == keyword->m_nodeType);
+		|| snt_keyword_class == keyword->m_nodeType);
 
 	m_nodeType = snt_class;
 	m_keyword = keyword;
@@ -214,147 +212,6 @@ void ClassNode::setMemberList(TokenNode* leftBrace, MemberListNode* memberList, 
 	m_rightBrace = rightBrace;
 	m_memberList->initializeMembersEnclosing(this);
 }
-
-
-void ClassNode::extendInternalCode(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments)
-{
-	if (m_templateParametersNode)
-	{
-		assert(0 == templateArguments);
-		templateArguments = &m_templateArguments;
-	}
-
-	buildAdditionalMethods();
-
-	std::vector<MemberNode*> memberNodes;
-	m_memberList->collectMemberNodes(memberNodes);
-	size_t count = memberNodes.size();
-	for (size_t i = 0; i < count; ++i)
-	{
-		MemberNode* memberNode = memberNodes[i];
-		switch (memberNode->m_nodeType)
-		{
-		case snt_class:
-			static_cast<ClassNode*>(memberNode)->extendInternalCode(m_typeNode, templateArguments);
-			break;
-		case snt_delegate:
-			static_cast<DelegateNode*>(memberNode)->extendInternalCode(m_typeNode, templateArguments);
-			break;
-		}
-	}
-
-}
-
-extern "C" extern int yytokenno;
-extern "C" extern int yylineno;
-extern "C" extern int yycolumnno;
-
-void ClassNode::generateCreateInstanceMethod(const char* methodName, MethodNode* constructor)
-{
-	IdentifyNode* name = (IdentifyNode*)newIdentify(methodName);
-	MethodNode* method = (MethodNode*)newMethod(name, 
-		constructor->m_leftParenthesis, constructor->m_parameterList, 
-		constructor->m_rightParenthesis, constructor->m_constant);
-	method->m_semicolon = constructor->m_semicolon;
-	ScopeNameNode* scopeName = (ScopeNameNode*)newScopeName(m_name, 0, 0, 0);
-	ScopeNameListNode* scopeNameList = (ScopeNameListNode*)newScopeNameList(0, scopeName);
-	TypeNameNode* typeName = (TypeNameNode*)newTypeName(scopeNameList);
-
-	setMethodResult(method, typeName, tc_shared_ptr);
-	TokenNode* modifier = (TokenNode*)newToken(snt_keyword_static);
-	setMethodModifier(method, modifier);
-	//if (constructor->m_filterNode)
-	//{
-	//	method->m_filterNode = (TokenNode*)newToken(constructor->m_filterNode->m_nodeType);
-	//}
-	method->m_enclosing = this;
-	method->m_additional = true;
-	m_additionalMethods.push_back(method);
-}
-
-void ClassNode::generateCreateArrayMethod(const char* methodName, MethodNode* constructor)
-{
-	IdentifyNode* name = (IdentifyNode*)newIdentify(methodName);
-	ParameterNode* parameter = (ParameterNode*)newParameter(newPrimitiveType(newToken(snt_keyword_unsigned), pt_uint), tc_none);
-	setParameterName(parameter, newIdentify("count"));
-	ParameterListNode* parameterList = (ParameterListNode*)newParameterList(0,0,parameter);
-	MethodNode* method = (MethodNode*)newMethod(name, 
-		constructor->m_leftParenthesis, parameterList, 
-		constructor->m_rightParenthesis, constructor->m_constant);
-	method->m_semicolon = constructor->m_semicolon;
-
-	ScopeNameNode* scopeName = (ScopeNameNode*)newScopeName(m_name, 0, 0, 0);
-	ScopeNameListNode* scopeNameList = (ScopeNameListNode*)newScopeNameList(0, scopeName);
-	TypeNameNode* typeName = (TypeNameNode*)newTypeName(scopeNameList);
-	setMethodResult(method, typeName, tc_shared_array);
-	TokenNode* modifier = (TokenNode*)newToken(snt_keyword_static);
-	setMethodModifier(method, modifier);
-	//if (constructor->m_filterNode)
-	//{
-	//	method->m_filterNode = (TokenNode*)newToken(constructor->m_filterNode->m_nodeType);
-	//}
-	method->m_enclosing = this;
-	method->m_additional = true;
-	m_additionalMethods.push_back(method);
-}
-
-void ClassNode::buildAdditionalMethods()
-{
-	int backupToken = yytokenno;
-	int backupLine = yylineno;
-	int backupColumn = yycolumnno;
-	yytokenno = 0;
-	yylineno = 0;
-	yycolumnno = 0;
-
-	MethodNode* constructor = nullptr;
-	bool defaultConstructor = false;
-	std::vector<MemberNode*> memberNodes;
-	m_memberList->collectMemberNodes(memberNodes);
-	size_t memberCount = memberNodes.size();
-	for(size_t i = 0; i < memberCount; ++i)
-	{
-		MemberNode* memberNode = memberNodes[i];
-		if(snt_method == memberNode->m_nodeType)
-		{
-			MethodNode* methodNode = static_cast<MethodNode*>(memberNode);
-			if(memberNode->m_name->m_str == m_name->m_str)
-			{
-				constructor = methodNode;
-				defaultConstructor = isDefaultConstructor(this, methodNode);
-				break;
-			}
-		}
-	}
-
-	if (constructor)
-	{
-		generateCreateInstanceMethod("New", constructor);
-		bool isStruct = (snt_keyword_struct == m_keyword->m_nodeType);
-		if (defaultConstructor && (m_arrayFlag || isStruct))
-		{
-			generateCreateArrayMethod("NewArray", constructor);
-		}
-	}
-
-	//size_t count = constructors.size();
-	//for(size_t i = 0; i < count; ++i)
-	//{
-	//	MethodNode* constructor = constructors[i];
-	//	//if(!isValueType())
-	//	//{
-	//	//	GenerateCreateInstanceMethod("NewARC", constructor);
-	//	//}
-	//}
-	//if(0 != defaultConstructor && !isIntrospectable())
-	//{
-	//	GenerateCreateArrayMethod("NewArray", defaultConstructor);
-	//}
-	yytokenno = backupToken;
-	yylineno = backupLine;
-	yycolumnno = backupColumn;
-}
-
 
 void ClassNode::collectOverrideMethods(std::vector<MethodNode*>& methodNodes, TemplateArguments* templateArguments)
 {
@@ -435,20 +292,6 @@ bool ClassNode::hasOverrideMethod(TemplateArguments* templateArguments)
 			{
 				return true;
 			}
-		}
-	}
-	return false;
-}
-
-bool ClassNode::isAdditionalMethod(MethodNode* methodNode)
-{
-	auto it = m_additionalMethods.begin();
-	auto end = m_additionalMethods.end();
-	for(; it != end; ++it)
-	{
-		if (methodNode == *it)
-		{
-			return true;
 		}
 	}
 	return false;
@@ -564,16 +407,6 @@ void ClassNode::checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* t
 		typeNameNode->calcTypeNodes(enclosingTypeNode, templateArguments);
 	}
 	m_memberList->checkTypeNames(m_typeNode, templateArguments);
-
-
-	size_t count = m_additionalMethods.size();
-	for (size_t i = 0; i < count; ++i)
-	{
-		MethodNode* methodNode = m_additionalMethods[i];
-		//methodNode->checkTypeNames(m_typeNode, templateArguments);
-		assert(methodNode->m_resultTypeName);
-		methodNode->m_resultTypeName->calcTypeNodes(m_typeNode, templateArguments);
-	}
 }
 
 

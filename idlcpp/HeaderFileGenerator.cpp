@@ -12,7 +12,6 @@
 #include "EnumeratorNode.h"
 #include "EnumNode.h"
 #include "ClassNode.h"
-#include "DelegateNode.h"
 #include "TemplateParametersNode.h"
 #include "TemplateParameterListNode.h"
 #include "TypeNameListNode.h"
@@ -23,6 +22,8 @@
 #include "OperatorNode.h"
 #include "ParameterNode.h"
 #include "ParameterListNode.h"
+#include "VariableTypeNode.h"
+#include "VariableTypeListNode.h"
 #include "TypedefNode.h"
 #include "Compiler.h"
 #include "Options.h"
@@ -173,12 +174,6 @@ void generateCode_ParameterPassing(FILE* file, ParameterPassing passing)
 	case pp_const_reference:
 		writeStringToFile(" const & ", file);
 		break;
-	case pp_rvalue_reference:
-		writeStringToFile(" && ", file);
-		break;
-	case pp_const_rvalue_reference:
-		writeStringToFile(" const && ", file);
-		break;
 	}
 }
 
@@ -190,29 +185,31 @@ void generateCode_Parameter(FILE* file, MethodNode* methodNode, ParameterNode* p
 	if (parameterNode->m_defaultDenote)
 	{
 		generateCode_Token(file, parameterNode->m_defaultDenote, 0);
-		if (methodNode->m_additional)
-		{
-			writeStringToFile(parameterNode->m_defaultParamCode->m_code.c_str(), file);
-		}
 	}
 };
 
-void generateCode_ParameterList(FILE* file, MethodNode* methodNode, ParameterListNode* parameterListNode, ScopeNode* scopeNode)
+void generateCode_OutputParameter(FILE* file, MethodNode* methodNode, VariableTypeNode* resultNode, ScopeNode* scopeNode)
 {
-	std::vector<std::pair<TokenNode*, ParameterNode*>> parameterNodes;
-	parameterListNode->collectParameterNodes(parameterNodes);
-	size_t parameterCount = parameterNodes.size();
-	for (size_t i = 0; i < parameterCount; ++i)
-	{
-		if (parameterNodes[i].first)
-		{
-			generateCode_Token(file, parameterNodes[i].first, 0);
-		}
-		generateCode_Parameter(file, methodNode, parameterNodes[i].second, scopeNode);
-	}
-}
+	generateCode_CompoundTypeName(file, resultNode->m_typeName, resultNode->m_typeCompound, scopeNode, true, 0);
+	generateCode_ParameterPassing(file, pp_reference);
+};
 
-
+//void generateCode_ParameterList(FILE* file, MethodNode* methodNode, ParameterListNode* parameterListNode, ScopeNode* scopeNode)
+//{
+//	std::vector<std::pair<TokenNode*, ParameterNode*>> parameterNodes;
+//	parameterListNode->collectParameterNodes(parameterNodes);
+//	size_t parameterCount = parameterNodes.size();
+//	for (size_t i = 0; i < parameterCount; ++i)
+//	{
+//		if (parameterNodes[i].first)
+//		{
+//			generateCode_Token(file, parameterNodes[i].first, 0);
+//		}
+//		generateCode_Parameter(file, methodNode, parameterNodes[i].second, scopeNode);
+//	}
+//}
+//
+//
 
 void HeaderFileGenerator::generateCode(FILE* dstFile, SourceFile* sourceFile, const char* fileName)
 {
@@ -266,9 +263,6 @@ void HeaderFileGenerator::generateCode_Namespace(FILE* file, NamespaceNode* name
 			break;
 		case snt_class:
 			generateCode_Class(file, static_cast<ClassNode*>(memberNode), indentation + 1);
-			break;
-		case snt_delegate:
-			generateCode_Delegate(file, static_cast<DelegateNode*>(memberNode), indentation + 1);
 			break;
 		case snt_template_class_instance:
 			break;
@@ -412,17 +406,6 @@ void HeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, i
 	std::vector<MemberNode*> memberNodes;
 	classNode->m_memberList->collectMemberNodes(memberNodes);
 
-	auto it = classNode->m_additionalMethods.begin();
-	auto end = classNode->m_additionalMethods.end();
-	for (; it != end; ++it)
-	{
-		MethodNode* methodNode = *it;
-		if (!methodNode->isNoCode())
-		{
-			memberNodes.push_back(methodNode);
-		}
-	}
-
 	size_t memberCount = memberNodes.size();
 	for (size_t i = 0; i < memberCount; ++i)
 	{
@@ -487,9 +470,6 @@ void HeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, i
 		case snt_class:
 			generateCode_Class(file, static_cast<ClassNode*>(memberNode), indentation + 1);
 			break;
-		case snt_delegate:
-			generateCode_Delegate(file, static_cast<DelegateNode*>(memberNode), indentation + 1);
-			break;
 		case snt_enum:
 			generateCode_Enum(file, static_cast<EnumNode*>(memberNode), indentation + 1);
 			break;
@@ -507,55 +487,6 @@ void HeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, i
 	generateCode_Token(file, classNode->m_semicolon, 0);
 }
 
-void HeaderFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delegateNode, int indentation)
-{
-	if (delegateNode->isNoCode())
-	{
-		g_compiler.outputEmbededCodes(file, delegateNode->m_filterNode);
-		file = 0;
-	}
-	generateCode_Token(file, delegateNode->m_keyword, indentation);
-	generateCode_Identify(file, delegateNode->m_name, 0);
-	
-	writeStringToFile(" : public ::paf::Delegate\n", file);
-	writeStringToFile("{\n", file, indentation);
-	writeStringToFile("public:\n", file, indentation);
-	
-	int methodIndentation = indentation + 1;
-
-	generateCode_Identify(file, delegateNode->m_name, methodIndentation);
-	writeStringToFile("() = default;\n", file, 0);
-	generateCode_Identify(file, delegateNode->m_name, methodIndentation);
-	writeStringToFile("(const ", file, 0);
-	generateCode_Identify(file, delegateNode->m_name, 0);
-	writeStringToFile("&) = delete;\n", file, 0);
-
-	if (0 != delegateNode->m_resultTypeName)
-	{
-		generateCode_CompoundTypeName(file, delegateNode->m_resultTypeName, delegateNode->m_resultTypeCompound, delegateNode->m_enclosing, true, methodIndentation);
-		methodIndentation = 0;
-		writeSpaceToFile(file);
-	}
-	writeStringToFile("invoke", file, methodIndentation);
-	generateCode_Token(file, delegateNode->m_leftParenthesis, 0);
-	//generateCode_ParameterList(file, delegateNode->m_parameterList, delegateNode->m_enclosing);
-	generateCode_Token(file, delegateNode->m_rightParenthesis, 0);
-	generateCode_Token(file, delegateNode->m_semicolon, 0);
-	writeStringToFile("\n", file);
-
-	writeStringToFile("typedef ", file, indentation + 1);
-	if (0 != delegateNode->m_resultTypeName)
-	{
-		generateCode_CompoundTypeName(file, delegateNode->m_resultTypeName, delegateNode->m_resultTypeCompound, delegateNode->m_enclosing, true, 0);
-		writeSpaceToFile(file);
-	}
-	writeStringToFile("(*CallBackFunction)(void* userData, ", file, 0);
-	//generateCode_ParameterList(file, delegateNode->m_parameterList, delegateNode->m_enclosing);
-	writeStringToFile(");\n", file);
-	writeStringToFile("::paf::FunctionCallBack* addFunction(CallBackFunction function, void* userData)\n", file, indentation + 1);
-	writeStringToFile("{return Delegate::addFunction(function, userData);}\n", file, indentation + 1);
-	writeStringToFile("};\n", file, indentation);
-}
 
 void HeaderFileGenerator::generateCode_Field(FILE* file, FieldNode* fieldNode, int indentation)
 {
@@ -635,7 +566,7 @@ void HeaderFileGenerator::generateCode_Property_Get(FILE* file, PropertyNode* pr
 		generateCode_Token(file, propertyNode->m_modifier, indentation);
 		indentation = 0;
 	}
-	generateCode_CompoundTypeName(file, propertyNode->m_typeName, propertyNode->m_get->m_typeCompound, propertyNode->m_enclosing, true, indentation);
+	generateCode_CompoundTypeName(file, propertyNode->m_typeName, propertyNode->m_typeCompound, propertyNode->m_enclosing, true, indentation);
 
 	writeSpaceToFile(file);
 	generateCode_Token(file, propertyNode->m_get->m_keyword, 0);
@@ -705,7 +636,7 @@ void HeaderFileGenerator::generateCode_Property_Set(FILE* file, PropertyNode* pr
 	{
 		writeStringToFile("::paf::Iterator* dstIterator, size_t dstCount, ", file);
 	}
-	generateCode_CompoundTypeName(file, propertyNode->m_typeName, propertyNode->m_set->m_typeCompound, propertyNode->m_enclosing, true, 0);
+	generateCode_CompoundTypeName(file, propertyNode->m_typeName, propertyNode->m_typeCompound, propertyNode->m_enclosing, true, 0);
 	generateCode_ParameterPassing(file, propertyNode->m_set->m_passing);
 	if (propertyNode->isCollection())
 	{
@@ -791,6 +722,7 @@ void HeaderFileGenerator::generateCode_Property(FILE* file, PropertyNode* proper
 
 void HeaderFileGenerator::generateCode_Method(FILE* file, MethodNode* methodNode, int indentation)
 {
+	char buf[4096];
 	if (methodNode->isNoCode())
 	{
 		g_compiler.outputEmbededCodes(file, methodNode->m_filterNode);
@@ -807,15 +739,16 @@ void HeaderFileGenerator::generateCode_Method(FILE* file, MethodNode* methodNode
 		{
 			firstToken = methodNode->m_voidResult;
 		}
-		else if (0 != methodNode->m_resultTypeName)
+		else if (0 != methodNode->m_resultList)
 		{
-			if (methodNode->m_resultTypeName->m_keyword)
+			VariableTypeNode* resultNode = methodNode->m_resultList->getFirstVariableType();
+			if (resultNode->m_typeName->m_keyword)
 			{
-				firstToken = methodNode->m_resultTypeName->m_keyword;
+				firstToken = resultNode->m_typeName->m_keyword;
 			}
 			else
 			{
-				firstToken = methodNode->m_resultTypeName->m_scopeNameList->m_scopeName->m_name;
+				firstToken = resultNode->m_typeName->m_scopeNameList->m_scopeName->m_name;
 			}
 		}
 		else
@@ -827,31 +760,55 @@ void HeaderFileGenerator::generateCode_Method(FILE* file, MethodNode* methodNode
 	}
 
 	ClassNode* classNode = static_cast<ClassNode*>(methodNode->m_enclosing);
-	if(classNode->isAdditionalMethod(methodNode))
-	{
-		writeStringToFile("\n", file);
-	}
 	if (0 != methodNode->m_modifier)
 	{
 		generateCode_Token(file, methodNode->m_modifier, indentation);
 		indentation = 0;
 	}
-	if (0 != methodNode->m_voidResult)
+
+	VariableTypeNode* resultNode = nullptr;
+	size_t startOutputParam = 0;
+	std::vector<VariableTypeNode*> resultNodes;
+	if (methodNode->m_resultList)
+	{
+		methodNode->m_resultList->collectVariableTypeNodes(resultNodes);
+		if (!methodNode->m_voidResult)
+		{
+			resultNode = resultNodes.front();
+			startOutputParam = 1;
+		}
+	}
+	size_t resultCount = resultNodes.size();
+
+	if (methodNode->m_voidResult)
 	{
 		generateCode_Token(file, methodNode->m_voidResult, indentation);
 		indentation = 0;
 	}
-	if(0 != methodNode->m_resultTypeName)
+	else if(resultNode)
 	{
-		generateCode_CompoundTypeName(file, methodNode->m_resultTypeName, methodNode->m_resultTypeCompound, methodNode->m_enclosing, true, indentation);
+		generateCode_CompoundTypeName(file, resultNode->m_typeName, resultNode->m_typeCompound, methodNode->m_enclosing, true, indentation);
 		indentation = 0;
 		writeSpaceToFile(file);
 	}
 	generateCode_Identify(file, methodNode->m_name, indentation);
 	generateCode_Token(file, methodNode->m_leftParenthesis, 0);
+
 	std::vector<std::pair<TokenNode*, ParameterNode*>> parameterNodes;
 	methodNode->m_parameterList->collectParameterNodes(parameterNodes);
 	size_t parameterCount = parameterNodes.size();
+
+	for (size_t i = startOutputParam; i < resultCount; ++i)
+	{
+		generateCode_OutputParameter(file, methodNode, resultNodes[i], classNode);
+		sprintf_s(buf, "output%zd", i);
+		writeStringToFile(buf, file);
+		if (i + 1 < resultCount || 0 != parameterCount)
+		{
+			writeStringToFile(", ", file);
+		}
+	}
+
 	for(size_t i = 0; i < parameterCount; ++i)
 	{
 		if(parameterNodes[i].first)

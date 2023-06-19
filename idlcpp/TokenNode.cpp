@@ -22,7 +22,6 @@ const char* g_keywordTokens[] =
 	"get_",
 	"void set_",
 	"typedef ",
-	"struct ",
 };
 
 TokenNode::TokenNode(int nodeType, int tokenNo, int lineNo, int columnNo)

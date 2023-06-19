@@ -19,5 +19,4 @@ public:
 	virtual void checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
 	virtual void checkSemantic(TemplateArguments* templateArguments);
 	bool isGlobalNamespace();
-	void extendInternalCode(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
 };

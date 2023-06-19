@@ -18,7 +18,7 @@ struct ParameterNode : SyntaxNodeImpl
 	TokenNode* m_defaultDenote;
 	EmbededCode* m_defaultParamCode;
 public:
-	ParameterNode(TypeNameNode* typeName, TypeCompound typeCompound);
+	ParameterNode(TypeNameNode* typeName, TypeCompound typeCompound, ParameterPassing passing, IdentifyNode* name);
 public:
 	void checkSemantic(TemplateArguments* templateArguments);
 };

@@ -9,7 +9,6 @@
 #include "EnumeratorListNode.h"
 #include "MemberListNode.h"
 #include "EnumNode.h"
-#include "DelegateNode.h"
 #include "ClassNode.h"
 #include "TemplateClassInstanceNode.h"
 #include "TemplateParametersNode.h"
@@ -23,6 +22,8 @@
 #include "OperatorNode.h"
 #include "ParameterNode.h"
 #include "ParameterListNode.h"
+#include "VariableTypeNode.h"
+#include "VariableTypeListNode.h"
 #include "TypeTree.h"
 #include "Platform.h"
 #include "Options.h"
@@ -34,10 +35,10 @@
 
 std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCompound, ParameterPassing passing, ScopeNode* scopeNode)
 {
-	if (nullptr == typeNameNode)
-	{
-		return std::string("void");
-	}
+	//if (nullptr == typeNameNode)
+	//{
+	//	return std::string("void");
+	//}
 	std::string name;
 	switch (typeCompound)
 	{
@@ -77,12 +78,6 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 		break;
 	case pp_const_reference:
 		name += " const & ";
-		break;
-	case pp_rvalue_reference:
-		name += " && ";
-		break;
-	case pp_const_rvalue_reference:
-		name += " const && ";
 		break;
 	}
 	return name;
@@ -362,9 +357,6 @@ void MetaHeaderFileGenerator::generateCode_Namespace(FILE* file, NamespaceNode* 
 				generateCode_Class(file, static_cast<ClassNode*>(memberNode), 0, indentation);
 			}
 			break;
-		case snt_delegate:
-			generateCode_Delegate(file, static_cast<DelegateNode*>(memberNode), 0, indentation);
-			break;
 		case snt_namespace:
 			generateCode_Namespace(file, static_cast<NamespaceNode*>(memberNode), indentation);
 			break;
@@ -410,15 +402,6 @@ void MetaHeaderFileGenerator::generateCode_Enum(FILE* file, EnumNode* enumNode, 
 		g_options.m_exportMacro.c_str(), metaTypeName.c_str());
 	writeStringToFile(buf, file, indentation + 1);
 	writeStringToFile("};\n\n", file, indentation);
-}
-
-void MetaHeaderFileGenerator::generateCode_Delegate(FILE* file, DelegateNode* delegateNode, TemplateArguments* templateArguments, int indentation)
-{
-	if (delegateNode->isNoMeta())
-	{
-		return;
-	}
-	generateCode_Class(file, delegateNode->m_classNode, 0, indentation);
 }
 
 void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, TemplateClassInstanceNode* templateClassInstance, int indentation)
@@ -504,7 +487,6 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 			}
 			else if(snt_enum == memberNode->m_nodeType
 				|| snt_class == memberNode->m_nodeType
-				|| snt_delegate == memberNode->m_nodeType
 				|| snt_typedef == memberNode->m_nodeType
 				|| snt_type_declaration == memberNode->m_nodeType)
 			{
@@ -525,27 +507,6 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 			else
 			{
 				assert(snt_field == memberNode->m_nodeType);
-			}
-		}
-	}
-	
-	//if(!classNode->isAbstractClass())
-	{
-		auto it = classNode->m_additionalMethods.begin();
-		auto end = classNode->m_additionalMethods.end();
-		for (; it != end; ++it)
-		{
-			MethodNode* methodNode = *it;
-			if (!reservedNames.empty())
-			{
-				if (!std::binary_search(reservedNames.begin(), reservedNames.end(), methodNode->m_name, CompareIdentifyPtr()))
-				{
-					continue;
-				}
-			}
-			if (!methodNode->isNoMeta())
-			{
-				staticMethodNodes.push_back(methodNode);
 			}
 		}
 	}
@@ -610,9 +571,6 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 		case snt_class:
 			generateCode_Class(file, static_cast<ClassNode*>(typeNode), templateClassInstance, indentation);
 			break;
-		case snt_delegate:
-			generateCode_Delegate(file, static_cast<DelegateNode*>(typeNode), templateArguments, indentation);
-			break;
 		case snt_typedef:
 			generateCode_Typedef(file, static_cast<TypedefNode*>(typeNode), templateArguments, indentation);
 			break;
@@ -633,17 +591,55 @@ void writeOverrideMethodParameter(MethodNode* methodNode, ParameterNode* paramet
 	writeStringToFile(parameterNode->m_name->m_str.c_str(), file);
 };
 
+void writeOverrideMethodOutputParameter(MethodNode* methodNode, VariableTypeNode* resultNode, FILE* file)
+{
+	std::string paramName = CalcCompoundTypeName(resultNode->m_typeName, resultNode->m_typeCompound, pp_reference, methodNode->getProgramNode());
+	writeStringToFile(paramName.c_str(), file);
+	//writeSpaceToFile(file);
+	//writeStringToFile(parameterNode->m_name->m_str.c_str(), file);
+};
+
 void writeInterfaceMethodDecl(MethodNode* methodNode, FILE* file, int indentation)
 {
 	char buf[4096];
-	std::string resultName = CalcCompoundTypeName(methodNode->m_resultTypeName, methodNode->m_resultTypeCompound, pp_value, methodNode->getProgramNode());
 
-	sprintf_s(buf, "%s %s(", resultName.c_str(), methodNode->m_name->m_str.c_str());
-	writeStringToFile(buf, file, indentation);
+	VariableTypeNode* resultNode = nullptr;
+	size_t startOutputParam = 0;
+	std::vector<VariableTypeNode*> resultNodes;
+	if (methodNode->m_resultList)
+	{
+		methodNode->m_resultList->collectVariableTypeNodes(resultNodes);
+		if (!methodNode->m_voidResult)
+		{
+			resultNode = resultNodes.front();
+			startOutputParam = 1;
+		}
+	}
+	size_t resultCount = resultNodes.size();
 
 	std::vector<ParameterNode*> parameterNodes;
 	methodNode->m_parameterList->collectParameterNodes(parameterNodes);
 	size_t parameterCount = parameterNodes.size();
+
+	std::string resultName = "void";
+	if (resultNode)
+	{
+		resultName = CalcCompoundTypeName(resultNode->m_typeName, resultNode->m_typeCompound, pp_value, methodNode->getProgramNode());
+	}
+	sprintf_s(buf, "%s %s(", resultName.c_str(), methodNode->m_name->m_str.c_str());
+	writeStringToFile(buf, file, indentation);
+
+	for (size_t i = startOutputParam; i < resultCount; ++i)
+	{
+		writeOverrideMethodOutputParameter(methodNode, resultNodes[i], file);
+		sprintf_s(buf, "output%zd", i);
+		writeStringToFile(buf, file);
+		if (i + 1 < resultCount || 0 != parameterCount)
+		{
+			writeStringToFile(", ", file);
+		}
+	}
+
 	for(size_t i = 0; i < parameterCount; ++i)
 	{
 		if(0 != i)

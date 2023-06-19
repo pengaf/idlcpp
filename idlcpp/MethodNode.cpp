@@ -1,4 +1,6 @@
 #include "MethodNode.h"
+#include "VariableTypeListNode.h"
+#include "VariableTypeNode.h"
 #include "ParameterListNode.h"
 #include "ParameterNode.h"
 #include "TypeNameNode.h"
@@ -19,8 +21,7 @@ MethodNode::MethodNode(IdentifyNode* name, TokenNode* leftParenthesis, Parameter
 	m_nodeType = snt_method;
 	m_modifier = 0;
 	m_voidResult = 0;
-	m_resultTypeName = 0;
-	m_resultTypeCompound = tc_none;
+	m_resultList = 0;
 	m_name = name;
 	m_leftParenthesis = leftParenthesis;
 	m_parameterList = parameterList;
@@ -28,7 +29,7 @@ MethodNode::MethodNode(IdentifyNode* name, TokenNode* leftParenthesis, Parameter
 	m_constant = constant;
 	m_semicolon = 0;
 	m_override = false;
-	m_additional = false;
+	m_resultCount = size_t(-1);
 	m_parameterCount = size_t(-1);
 	m_firstDefaultParam = size_t(-1);
 }
@@ -53,6 +54,22 @@ bool MethodNode::isVirtual()
 bool MethodNode::isAbstract()
 {
 	return (0 != m_modifier && snt_keyword_abstract == m_modifier->m_nodeType);
+}
+
+size_t MethodNode::getResultCount() const
+{
+	if (size_t(-1) == m_resultCount)
+	{
+		size_t res = 0;
+		VariableTypeListNode* list = m_resultList;
+		while (0 != list)
+		{
+			++res;
+			list = list->m_variableTypeList;
+		}
+		m_resultCount = res;
+	}
+	return m_resultCount;
 }
 
 size_t MethodNode::getParameterCount() const
@@ -94,18 +111,17 @@ size_t MethodNode::getFirstDefaultParameter() const
 
 void MethodNode::checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments)
 {
-	if (0 != m_resultTypeName)
+	std::vector<VariableTypeNode*> resultNodes;
+	m_resultList->collectVariableTypeNodes(resultNodes);
+	for (VariableTypeNode* resultNode : resultNodes)
 	{
-		m_resultTypeName->calcTypeNodes(enclosingTypeNode, templateArguments);
+		resultNode->m_typeName->calcTypeNodes(enclosingTypeNode, templateArguments);
 	}
 
 	std::vector<ParameterNode*> parameterNodes;
 	m_parameterList->collectParameterNodes(parameterNodes);
-	auto it = parameterNodes.begin();
-	auto end = parameterNodes.end();
-	for (; it != end; ++it)
+	for (ParameterNode* parameterNode : parameterNodes)
 	{
-		ParameterNode* parameterNode = *it;
 		parameterNode->m_typeName->calcTypeNodes(enclosingTypeNode, templateArguments);
 	}
 }
@@ -116,15 +132,6 @@ void MethodNode::checkSemantic(TemplateArguments* templateArguments)
 
 	assert(snt_class == m_enclosing->m_nodeType);
 	ClassNode* classNode = static_cast<ClassNode*>(m_enclosing);
-	if(0 != m_resultTypeName)
-	{
-		TypeNode* typeNode = m_resultTypeName->getTypeNode(templateArguments);
-		if (0 == typeNode)
-		{
-			return;
-		}
-		g_compiler.useType(typeNode, templateArguments, tc_none == m_resultTypeCompound ? tu_use_definition : tu_use_declaration, m_resultTypeName);
-	}
 	if(m_override)
 	{
 		if(!isVirtual())
@@ -133,13 +140,21 @@ void MethodNode::checkSemantic(TemplateArguments* templateArguments)
 		}
 	}
 
-	std::vector<ParameterNode*> parameterNodes;
-	m_parameterList->collectParameterNodes(parameterNodes);
-	checkParameterNames(parameterNodes);
-
-	size_t parameterCount = parameterNodes.size();
-	for(size_t i = 0; i < parameterCount; ++i)
+	std::vector<VariableTypeNode*> resultNodes;
+	m_resultList->collectVariableTypeNodes(resultNodes);
+	
+	bool outputParam = (m_voidResult != nullptr);
+	for (VariableTypeNode* resultNode : resultNodes)
 	{
-		parameterNodes[i]->checkSemantic(templateArguments);
+		resultNode->checkSemantic(templateArguments, outputParam);
+		outputParam = true;
+	}
+
+	std::vector<ParameterNode*> parameterNodes;
+	m_parameterList->collectParameterNodes(parameterNodes);	
+	checkParameterNames(parameterNodes);
+	for (ParameterNode* parameterNode : parameterNodes)
+	{
+		parameterNode->checkSemantic(templateArguments);
 	}
 }

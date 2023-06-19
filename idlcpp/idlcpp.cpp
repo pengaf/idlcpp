@@ -63,7 +63,6 @@ extern "C"
 extern int yylineno;
 extern int yytokenno;
 extern int yyHasCollectionProperty;
-extern int yyHasDelegate;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE createBufferState(FILE* file);
 YY_BUFFER_STATE yy_scan_string( const char *yy_str );
@@ -179,11 +178,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			yylineno = 1;
 			yytokenno = 0;
 			yyHasCollectionProperty = 0;
-			yyHasDelegate = 0;
 			yyparse();
 			fclose(file);
 			sourceFile->m_hasCollectionProperty = (0 != yyHasCollectionProperty);
-			sourceFile->m_hasDelegate = (0 != yyHasDelegate);
 		}
 		mainSourceFile = false;
 	}
@@ -192,7 +189,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		ErrorList_Output();
 		return -1;
 	}
-	g_compiler.extendInternalCode();
 	g_compiler.collectTypes();
 	if (0 != ErrorList_ErrorCount())
 	{

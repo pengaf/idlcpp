@@ -68,7 +68,6 @@ public:
 	void prepareParse(SourceFile* sourceFile, bool main);
 	void attachSyntaxTree(ProgramNode* programNode);
 	void collectTypes();
-	void extendInternalCode();
 	void checkTypeNames();
 	void checkSemantic();
 	void useType(TypeNode* typeNode, TemplateArguments* templateArguments, TypeUsage usage, TypeNameNode* typeNameNode);

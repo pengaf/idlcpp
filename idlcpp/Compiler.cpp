@@ -182,26 +182,6 @@ void Compiler::checkSemantic()
 	}
 }
 
-void Compiler::extendInternalCode()
-{
-	std::vector<SourceFile*> sourceFiles;
-	CollectSourceFiles(sourceFiles, m_mainSourceFile);
-	size_t count = sourceFiles.size();
-	for (size_t i = 0; i < count; ++i)
-	{
-		if (0 != sourceFiles[i]->m_syntaxTree)
-		{
-			m_currentSourceFile = sourceFiles[i];
-			m_currentSourceFile->m_syntaxTree->extendInternalCode(0, 0);
-		}
-	}
-	//if (0 != m_mainSourceFile && 0 != m_mainSourceFile->m_syntaxTree)
-	//{
-	//	m_currentSourceFile = m_mainSourceFile;
-	//	m_mainSourceFile->m_syntaxTree->extendInternalCode(0, 0);
-	//}
-}
-
 void Compiler::useType(TypeNode* typeNode, TemplateArguments* templateArguments, TypeUsage usage, TypeNameNode* typeNameNode)
 {
 	useType(typeNode, usage, typeNameNode);

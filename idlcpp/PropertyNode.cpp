@@ -8,25 +8,23 @@
 #include "Compiler.h"
 #include <assert.h>
 
-GetterNode::GetterNode(TokenNode* keyword, TypeCompound typeCompound)
+GetterNode::GetterNode(TokenNode* keyword, ParameterPassing passing)
 {
 	m_nodeType = snt_getter;
 	m_keyword = keyword;
 	m_nativeName = 0;
-	m_typeCompound = typeCompound;
-	m_passing = pp_value;
+	m_passing = passing;
 }
 
-SetterNode::SetterNode(TokenNode* keyword, TypeCompound typeCompound)
+SetterNode::SetterNode(TokenNode* keyword, ParameterPassing passing)
 {
 	m_nodeType = snt_setter;
 	m_keyword = keyword;
 	m_nativeName = 0;
-	m_typeCompound = typeCompound;
-	m_passing = pp_value;
+	m_passing = passing;
 }
 
-PropertyNode::PropertyNode(TypeNameNode* typeName, IdentifyNode* name, PropertyCategory category)
+PropertyNode::PropertyNode(TypeNameNode* typeName, TypeCompound typeCompound, IdentifyNode* name, PropertyCategory category)
 {
 	m_nodeType = snt_property;
 	m_modifier = 0;
@@ -34,6 +32,7 @@ PropertyNode::PropertyNode(TypeNameNode* typeName, IdentifyNode* name, PropertyC
 	m_name = name;
 	m_get = 0;
 	m_set = 0;
+	m_typeCompound = typeCompound;
 	m_propertyCategory = category;
 }
 
@@ -91,11 +90,11 @@ void PropertyNode::checkSemantic(TemplateArguments* templateArguments)
 		return;
 	}
 	bool byValue = false;
-	if (m_set && (tc_none == m_set->m_typeCompound && pp_value == m_set->m_passing) )
+	if (m_set && (tc_none == m_typeCompound && pp_value == m_set->m_passing) )
 	{
 		byValue = true;
 	}
-	if (m_get && (tc_none == m_get->m_typeCompound && pp_value == m_get->m_passing))
+	if (m_get && (tc_none == m_typeCompound && pp_value == m_get->m_passing))
 	{
 		byValue = true;
 	}

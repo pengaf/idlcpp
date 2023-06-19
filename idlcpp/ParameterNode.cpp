@@ -10,13 +10,13 @@
 #include <assert.h>
 
 
-ParameterNode::ParameterNode(TypeNameNode* typeName, TypeCompound typeCompound)
+ParameterNode::ParameterNode(TypeNameNode* typeName, TypeCompound typeCompound, ParameterPassing passing, IdentifyNode* name)
 {
 	m_nodeType = snt_parameter;
 	m_typeName = typeName;
-	m_name = nullptr;
+	m_name = name;
 	m_typeCompound = typeCompound;
-	m_passing = pp_value;
+	m_passing = passing;
 	m_defaultDenote = nullptr;
 	m_defaultParamCode = nullptr;
 }

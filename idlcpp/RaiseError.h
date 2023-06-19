@@ -8,7 +8,6 @@ struct ParameterNode;
 struct MethodNode;
 struct PropertyNode;
 struct FieldNode;
-struct DelegateNode;
 
 void RaiseError_NestedTemplateClass(IdentifyNode* node);
 void RaiseError_InvalidTypeName(IdentifyNode* node);

@@ -1,22 +1,21 @@
 #include "FieldNode.h"
 #include "TokenNode.h"
 #include "IdentifyNode.h"
-#include "ClassNode.h"
 #include "TypeNameNode.h"
 #include "TypeTree.h"
 #include "RaiseError.h"
 #include "Compiler.h"
 #include <assert.h>
 
-FieldNode::FieldNode(TypeNameNode* typeName, TypeCompound typeCompound, IdentifyNode* name)
+FieldNode::FieldNode(TypeNameNode* typeName, TypeCompound typeCompound, IdentifyNode* name, TokenNode* leftBracket, TokenNode* rightBracket)
 {
 	m_nodeType = snt_field;
 	m_static = 0;
 	m_typeName = typeName;
 	m_typeCompound = typeCompound;
 	m_name = name;
-	m_leftBracket = 0;
-	m_rightBracket = 0;
+	m_leftBracket = leftBracket;
+	m_rightBracket = rightBracket;
 	m_semicolon = 0;
 }
 

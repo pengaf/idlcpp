@@ -4,7 +4,6 @@
 #include "TypeNameNode.h"
 #include "ParameterNode.h"
 #include "MethodNode.h"
-#include "DelegateNode.h"
 #include "PropertyNode.h"
 #include "FieldNode.h"
 #include "ScopeNameListNode.h"

@@ -33,7 +33,6 @@ struct ClassNode : ScopeNode
 	TemplateParametersNode* m_templateParametersNode;
 	ClassTypeNode* m_typeNode;
 	TemplateArguments m_templateArguments;
-	std::vector<MethodNode*> m_additionalMethods;
 	TypeCategory m_typeCategory;
 	bool m_override;
 	bool m_arrayFlag;
@@ -41,13 +40,8 @@ public:
 	ClassNode(TokenNode* keyword, IdentifyListNode* conceptList, IdentifyNode* name);
 	void setTemplateParameters(TemplateParametersNode* templateParametersNode);
 	void setMemberList(TokenNode* leftBrace, MemberListNode* memberList, TokenNode* rightBrace);
-	void buildAdditionalMethods();
-	void extendInternalCode(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
-	//bool isAbstractClass();
-	//bool isCopyableClass(TemplateArguments* templateArguments);
 	bool needSubclassProxy(TemplateArguments* templateArguments);
 	bool hasOverrideMethod(TemplateArguments* templateArguments);
-	bool isAdditionalMethod(MethodNode* methodNode);
 	void collectOverrideMethods(std::vector<MethodNode*>& methodNodes, TemplateArguments* templateArguments);
 	void generateCreateInstanceMethod(const char* methodName, MethodNode* constructor);
 	void generateCreateArrayMethod(const char* methodName, MethodNode* constructor);

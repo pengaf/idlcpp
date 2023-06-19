@@ -4,6 +4,7 @@
 
 struct TokenNode;
 struct TypeNameNode;
+struct VariableTypeNode;
 
 struct FieldNode : MemberNode
 {
@@ -14,7 +15,7 @@ struct FieldNode : MemberNode
 	TokenNode* m_semicolon;
 	TypeCompound m_typeCompound;
 public:
-	FieldNode(TypeNameNode* typeName, TypeCompound typeCompound, IdentifyNode* name);
+	FieldNode(TypeNameNode* typeName, TypeCompound typeCompound, IdentifyNode* name, TokenNode* leftBracket, TokenNode* rightBracket);
 	bool isArray();
 	bool isStatic();
 	virtual void checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);

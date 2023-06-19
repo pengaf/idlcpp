@@ -65,8 +65,6 @@ enum ParameterPassing
 	pp_value,
 	pp_reference,
 	pp_const_reference,
-	pp_rvalue_reference,
-	pp_const_rvalue_reference,
 };
 
 typedef enum ParameterPassing ParameterPassing;
@@ -107,7 +105,6 @@ enum SyntaxNodeType
 	snt_keyword_get,
 	snt_keyword_set,
 	snt_keyword_typedef,
-	snt_keyword_delegate,
 
 	snt_end_output,
 
@@ -124,6 +121,8 @@ enum SyntaxNodeType
 	snt_scope_name_list,
 	snt_type_name,
 	snt_type_name_list,
+	snt_variable_type,
+	snt_variable_type_list,
 	snt_parameter,
 	snt_parameter_list,
 	snt_template_parameter,
@@ -137,7 +136,6 @@ enum SyntaxNodeType
 	snt_operator,
 	snt_class,
 	snt_template_class_instance,
-	snt_delegate,
 	snt_typedef,
 	snt_type_declaration,
 	snt_namespace,
@@ -183,37 +181,39 @@ SyntaxNode* newTypeNameList(SyntaxNode* typeNameList, SyntaxNode* delimiter, Syn
 void setTypeNameFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode);
 void setMemberFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode);
 void setNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
-SyntaxNode* newField(SyntaxNode* type, TypeCompound typeCompound, SyntaxNode* name);
-void setFieldArray(SyntaxNode* syntaxNode, SyntaxNode* leftBracket, SyntaxNode* rightBracket);
+
+SyntaxNode* newVariableType(SyntaxNode* type, TypeCompound typeCompound);
+SyntaxNode* newVariableTypeList(SyntaxNode* variableTypeList, SyntaxNode* delimiter, SyntaxNode* variableType);
+
+//field
+SyntaxNode* newField(SyntaxNode* variableTypeList, SyntaxNode* name, SyntaxNode* leftBracket, SyntaxNode* rightBracket);
 void setFieldStatic(SyntaxNode* syntaxNode, SyntaxNode* stat);
 void setFieldSemicolon(SyntaxNode* syntaxNode, SyntaxNode* semicolon);
 
-SyntaxNode* newGetter(SyntaxNode* keyword, TypeCompound typeCompound);
-void setGetterNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
-void setGetterPassing(SyntaxNode* syntaxNode, ParameterPassing passing);
-SyntaxNode* newSetter(SyntaxNode* keyword, TypeCompound typeCompound);
-void setSetterNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
-void setSetterPassing(SyntaxNode* syntaxNode, ParameterPassing passing);
 
-SyntaxNode* newProperty(SyntaxNode* type, SyntaxNode* name, PropertyCategory category);
+//property
+SyntaxNode* newGetter(SyntaxNode* keyword, ParameterPassing passing);
+void setGetterNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
+SyntaxNode* newSetter(SyntaxNode* keyword, ParameterPassing passing);
+void setSetterNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
+
+SyntaxNode* newProperty(SyntaxNode* variableTypeList, SyntaxNode* name, PropertyCategory category);
 void setPropertyGetter(SyntaxNode* property, SyntaxNode* getter);
 void setPropertySetter(SyntaxNode* property, SyntaxNode* setter);
 void setPropertyModifier(SyntaxNode* syntaxNode, SyntaxNode* modifier);
 
-SyntaxNode* newParameter(SyntaxNode* type, TypeCompound typeCompound);
-void setParameterPassing(SyntaxNode* parameter, ParameterPassing passing);
-void setParameterName(SyntaxNode* parameter, SyntaxNode* name);
+//method
+SyntaxNode* newParameter(SyntaxNode* variableTypeList, ParameterPassing passing, SyntaxNode* name);
 void setDefaultParameter(SyntaxNode* parameter, SyntaxNode* defaultDenote);
-
 SyntaxNode* newParameterList(SyntaxNode* parameterList, SyntaxNode* delimiter, SyntaxNode* parameter);
 
 SyntaxNode* newMethod(SyntaxNode* name, SyntaxNode* leftParenthesis, SyntaxNode* parameterList, SyntaxNode* rightParenthesis, SyntaxNode* constant);
-void setMethodVoidResult(SyntaxNode* method, SyntaxNode* voidResult);
-void setMethodResult(SyntaxNode* method, SyntaxNode* result, TypeCompound resultCompound);
+void setMethodResult(SyntaxNode* method, SyntaxNode* voidResult, SyntaxNode* variableTypeList);
 void setMethodModifier(SyntaxNode* method, SyntaxNode* modifier);
 void setMethodOverride(SyntaxNode* method);
 void setMethodSemicolon(SyntaxNode* syntaxNode, SyntaxNode* semicolon);
 
+//operator
 SyntaxNode* newAssignOperator(SyntaxNode* keyword, SyntaxNode* sign, SyntaxNode* leftParenthesis, SyntaxNode* paramTypeName, ParameterPassing paramPassing, SyntaxNode* rightParenthesis, SyntaxNode* semicolon);
 SyntaxNode* newCastOperator(SyntaxNode* keyword, SyntaxNode* resultTypeName, SyntaxNode* leftParenthesis, SyntaxNode* rightParenthesis, SyntaxNode* constant, SyntaxNode* semicolon);
 
@@ -225,10 +225,6 @@ void setClassModifier(SyntaxNode* cls, SyntaxNode* modifier);
 void setClassOverride(SyntaxNode* cls);
 void setClassTemplateParameters(SyntaxNode* cls, SyntaxNode* parameters);
 void setClassSemicolon(SyntaxNode* cls, SyntaxNode* semicolon);
-
-SyntaxNode* newDelegate(SyntaxNode* name, SyntaxNode* leftParenthesis, SyntaxNode* parameterList, SyntaxNode* rightParenthesis, SyntaxNode* semicolon);
-void setDelegateResult(SyntaxNode* delegate, SyntaxNode* result, TypeCompound resultTypeCompound);
-void setDelegateKeyword(SyntaxNode* delegate, SyntaxNode* keyword);
 
 SyntaxNode* newTypeDeclaration(SyntaxNode* name, TypeCategory typeCategory);
 SyntaxNode* newTypedef(SyntaxNode* keyword, SyntaxNode* name, SyntaxNode* typeName);

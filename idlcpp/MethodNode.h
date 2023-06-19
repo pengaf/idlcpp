@@ -4,7 +4,7 @@
 struct SyntaxNodeImpl;
 struct TokenNode;
 struct ParameterListNode;
-struct ParameterNode;
+struct VariableTypeListNode;
 struct TypeNameNode;
 
 struct MethodNode : MemberNode
@@ -12,15 +12,14 @@ struct MethodNode : MemberNode
 public:
 	TokenNode* m_modifier;//static virtual abstract
 	TokenNode* m_voidResult;
-	TypeNameNode* m_resultTypeName;
-	TypeCompound m_resultTypeCompound;
+	VariableTypeListNode* m_resultList;
 	TokenNode* m_leftParenthesis;
 	ParameterListNode* m_parameterList;
 	TokenNode* m_rightParenthesis;
 	TokenNode* m_constant;
 	TokenNode* m_semicolon;
 	bool m_override;
-	bool m_additional;
+	mutable size_t m_resultCount;
 	mutable size_t m_parameterCount;
 	mutable size_t m_firstDefaultParam;
 public:
@@ -30,6 +29,7 @@ public:
 	bool isAbstract();
 	bool isConstant();
 	TypeCompound getResultTypeCompound();
+	size_t getResultCount() const;
 	size_t getParameterCount() const;
 	size_t getFirstDefaultParameter() const;
 	virtual void checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
