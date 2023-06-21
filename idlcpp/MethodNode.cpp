@@ -31,7 +31,7 @@ MethodNode::MethodNode(IdentifyNode* name, TokenNode* leftParenthesis, Parameter
 	m_override = false;
 	m_resultCount = size_t(-1);
 	m_parameterCount = size_t(-1);
-	m_firstDefaultParam = size_t(-1);
+	m_defaultParameterCount = size_t(-1);
 }
 
 bool MethodNode::isStatic()
@@ -88,9 +88,9 @@ size_t MethodNode::getParameterCount() const
 	return m_parameterCount;
 }
 
-size_t MethodNode::getFirstDefaultParameter() const
+size_t MethodNode::getDefaultParameterCount() const
 {
-	if (size_t(-1) == m_firstDefaultParam)
+	if (size_t(-1) == m_defaultParameterCount)
 	{
 		size_t paramCount = 0;
 		size_t defaultCount = 0;
@@ -104,9 +104,9 @@ size_t MethodNode::getFirstDefaultParameter() const
 			}
 			list = list->m_parameterList;
 		}
-		m_firstDefaultParam = paramCount - defaultCount;
+		m_defaultParameterCount = defaultCount;
 	}
-	return m_firstDefaultParam;
+	return m_defaultParameterCount;
 }
 
 void MethodNode::checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments)
@@ -150,11 +150,17 @@ void MethodNode::checkSemantic(TemplateArguments* templateArguments)
 		outputParam = true;
 	}
 
+	int defaultParamOffset = getParameterCount() - getDefaultParameterCount();
 	std::vector<ParameterNode*> parameterNodes;
 	m_parameterList->collectParameterNodes(parameterNodes);	
 	checkParameterNames(parameterNodes);
 	for (ParameterNode* parameterNode : parameterNodes)
 	{
 		parameterNode->checkSemantic(templateArguments);
+		--defaultParamOffset;
+		if (defaultParamOffset < 0 && !parameterNode->m_defaultDenote)
+		{
+			RaiseError_MissingDefaultParameter(parameterNode->m_name);
+		}
 	}
 }

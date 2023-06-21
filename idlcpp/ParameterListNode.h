@@ -15,6 +15,7 @@ public:
 	ParameterListNode(ParameterListNode* parameterList, TokenNode* delimiter, ParameterNode* parameter);
 	void collectParameterNodes(std::vector<std::pair<TokenNode*, ParameterNode*>>& parameterNodes);
 	void collectParameterNodes(std::vector<ParameterNode*>& parameterNodes);
+	void collectDefaultParameterNodes(std::vector<ParameterNode*>& parameterNodes);
 };
 
 void checkParameterNames(std::vector<ParameterNode*>& parameterNodes);

@@ -21,7 +21,7 @@ public:
 	bool m_override;
 	mutable size_t m_resultCount;
 	mutable size_t m_parameterCount;
-	mutable size_t m_firstDefaultParam;
+	mutable size_t m_defaultParameterCount;
 public:
 	MethodNode(IdentifyNode* name, TokenNode* leftParenthesis, ParameterListNode* parameterList, TokenNode* rightParenthesis, TokenNode* constant);
 	bool isStatic();
@@ -31,7 +31,7 @@ public:
 	TypeCompound getResultTypeCompound();
 	size_t getResultCount() const;
 	size_t getParameterCount() const;
-	size_t getFirstDefaultParameter() const;
+	size_t getDefaultParameterCount() const;
 	virtual void checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* templateArguments);
 	virtual void checkSemantic(TemplateArguments* templateArguments);
 };

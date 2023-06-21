@@ -29,18 +29,18 @@
 #include <map>
 #include <algorithm>
 
-
-bool isDefaultConstructor(ClassNode* classNode, MethodNode* methodNode)
-{
-	if(classNode->m_name->m_str == methodNode->m_name->m_str)
-	{
-		if(0 == methodNode->getFirstDefaultParameter())
-		{
-			return true;
-		}
-	}
-	return false;
-}
+//
+//bool isDefaultConstructor(ClassNode* classNode, MethodNode* methodNode)
+//{
+//	if(classNode->m_name->m_str == methodNode->m_name->m_str)
+//	{
+//		if(methodNode->getParameterCount() == methodNode->getDefaultParameterCount())
+//		{
+//			return true;
+//		}
+//	}
+//	return false;
+//}
 
 void checkMemberNames(ClassNode* classNode, std::vector<MemberNode*>& memberNodes, TemplateArguments* templateArguments)
 {

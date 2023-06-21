@@ -34,6 +34,19 @@ void ParameterListNode::collectParameterNodes(std::vector<ParameterNode*>& param
 	std::reverse(parameterNodes.begin(), parameterNodes.end());
 }
 
+void ParameterListNode::collectDefaultParameterNodes(std::vector<ParameterNode*>& parameterNodes)
+{
+	ParameterListNode* list = this;
+	while (0 != list)
+	{
+		if (list->m_parameter->m_defaultParamCode)
+		{
+			parameterNodes.push_back(list->m_parameter);
+		}
+		list = list->m_parameterList;
+	}
+	std::reverse(parameterNodes.begin(), parameterNodes.end());
+}
 
 void checkParameterNames(std::vector<ParameterNode*>& parameterNodes)
 {

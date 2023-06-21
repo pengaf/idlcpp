@@ -148,10 +148,10 @@ void RaiseError_InterfaceMethodIsNotVirtual(IdentifyNode* node)
 		node->m_columnNo, semantic_error_override_method_must_be_virtual_or_abstract, buf);
 }
 
-void RaiseError_MissingDefaultParamCode(IdentifyNode* node)
+void RaiseError_MissingDefaultParameter(IdentifyNode* node)
 {
 	char buf[error_info_buffer_size];
-	sprintf_s(buf, "\'%s\' : missing default parameter value", node->m_str.c_str());
+	sprintf_s(buf, "\'%s\' : missing default parameter", node->m_str.c_str());
 	ErrorList_AddItem_CurrentFile(node->m_lineNo,
 		node->m_columnNo, semantic_error_missing_default_parameter_value, buf);
 }

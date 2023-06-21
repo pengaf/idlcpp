@@ -29,7 +29,7 @@ void ParameterNode::checkSemantic(TemplateArguments* templateArguments)
 		m_defaultParamCode = sourceFile->getEmbededCode(m_defaultDenote->m_tokenNo + 1);
 		if (nullptr == m_defaultParamCode)
 		{
-			RaiseError_MissingDefaultParamCode(m_name);
+			RaiseError_MissingDefaultParameter(m_name);
 		}
 	}
 

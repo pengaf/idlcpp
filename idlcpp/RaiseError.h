@@ -24,7 +24,7 @@ void RaiseError_TemplateClassInstanceInvalidTypeName(const char* typeName, Ident
 void RaiseError_TemplateInterfaceNotSupported(IdentifyNode* node);
 void RaiseError_MissingReferenceBaseType(IdentifyNode* node);
 void RaiseError_InterfaceMethodIsNotVirtual(IdentifyNode* node);
-void RaiseError_MissingDefaultParamCode(IdentifyNode* node);
+void RaiseError_MissingDefaultParameter(IdentifyNode* node);
 //void RaiseError_MissingFromString(IdentifyNode* node);
 //void RaiseError_MissingToString(IdentifyNode* node);
 //void RaiseError_MissingFromBuffer(IdentifyNode* node);

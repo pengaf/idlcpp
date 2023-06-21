@@ -84,7 +84,7 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 }
 
 const char g_metaMethodPrefix[] = "static ::paf::ErrorCode ";
-const char g_metaMethodPostfix[] = "(::paf::Variant* result, ::paf::Variant** args, uint32_t numArgs);\n";
+const char g_metaMethodPostfix[] = "(::paf::Variant* results, uint32_t& numResults, ::paf::Variant** args, uint32_t numArgs);\n";
 
 void writeMetaMethodDecl(const char* funcName, FILE* file, int indentation)
 {
