@@ -138,6 +138,28 @@ void writeMetaMethodImpl_UseParam(ClassNode* classNode, TemplateArguments* templ
 	writeStringToFile(strArg, file, 0);
 }
 
+void writeMetaMethodImpl_UseOutputParam(ClassNode* classNode, TemplateArguments* templateArguments, VariableTypeNode* outputNode, size_t paramIndex, bool lastParam, FILE* file)
+{
+	char strArg[64];
+	std::string typeName;
+	TypeCategory typeCategory = CalcTypeNativeName(typeName, outputNode->m_typeName, templateArguments);
+	sprintf_s(strArg, "res%zd%s", paramIndex, lastParam ? "" : ", ");
+	writeStringToFile(strArg, file, 0);
+}
+
+void writeMetaMethodImpl_CastSelf(ClassNode* classNode, TemplateArguments* templateArguments, MethodNode* methodNode, FILE* file, int indentation)
+{
+	char buf[4096];
+	std::string className;
+	classNode->getNativeName(className, templateArguments);
+	sprintf_s(buf, "%s* self;\n", className.c_str());
+	writeStringToFile(buf, file, indentation);
+	writeStringToFile("if(!args[0]->castToRawPointer(GetSingleton(), (void**)&self))\n", file, indentation);
+	writeStringToFile("{\n", file, indentation);
+	writeStringToFile("return ::paf::ErrorCode::e_invalid_this_type;\n", file, indentation + 1);
+	writeStringToFile("}\n", file, indentation);
+}
+
 void writeMetaMethodImpl_CastParam(ClassNode* classNode, TemplateArguments* templateArguments, ParameterNode* parameterNode, size_t argIndex, size_t paramIndex, FILE* file, int indentation)
 {
 	char buf[4096];
@@ -206,12 +228,11 @@ void writeMetaMethodImpl_CastParam(ClassNode* classNode, TemplateArguments* temp
 }
 
 
-void writeMetaMethodImpl_DeclareOutputParam(ClassNode* classNode, TemplateArguments* templateArguments, VariableTypeNode* outputNode, size_t argIndex, size_t paramIndex, FILE* file, int indentation)
+void writeMetaMethodImpl_DeclareOutputParam(ClassNode* classNode, TemplateArguments* templateArguments, VariableTypeNode* outputNode, size_t paramIndex, FILE* file, int indentation)
 {
 	char buf[4096];
 	std::string typeName;
 	TypeCategory typeCategory = CalcTypeNativeName(typeName, outputNode->m_typeName, templateArguments);
-	std::string defaultValue, argNumTest;
 
 	switch (outputNode->m_typeCompound)
 	{
@@ -232,6 +253,118 @@ void writeMetaMethodImpl_DeclareOutputParam(ClassNode* classNode, TemplateArgume
 	}
 	writeStringToFile(buf, file, indentation + 1);
 }
+
+void writeMetaMethodImpl_Call(ClassNode* classNode, TemplateArguments* templateArguments, MethodNode* methodNode, std::vector<VariableTypeNode*>& resultsNodes, std::vector<ParameterNode*>& parameterNodes, bool isStatic, FILE* file, int indentation)
+{
+	char buf[4096];
+	std::string className;
+	classNode->getNativeName(className, templateArguments);
+	IdentifyNode* methodNameNode = methodNode->m_nativeName ? methodNode->m_nativeName : methodNode->m_name;
+
+	VariableTypeNode* resultNode = nullptr;
+	if (!methodNode->m_voidResult && methodNode->m_resultList)
+	{
+		resultNode = resultsNodes[0];
+	}
+	if (resultNode)
+	{
+		switch (resultNode->m_typeCompound)
+		{
+		case tc_raw_ptr:
+			writeStringToFile("results[0].assignRawPtr(", file, indentation);
+			break;
+		case tc_raw_array:
+			writeStringToFile("results[0].assignRawArray(", file, indentation);
+			break;
+		case tc_shared_ptr:
+			writeStringToFile("results[0].assignSharedPtr(", file, indentation);
+			break;
+		case tc_shared_array:
+			writeStringToFile("results[0].assignSharedArray(", file, indentation);
+			break;
+		default:
+			writeStringToFile("results[0].assignValue(", file, indentation);
+		}
+	}
+	else
+	{
+		writeStringToFile("", file, indentation);
+	}
+
+	size_t startOutputParam = methodNode->m_voidResult ? 0 : 1;
+	size_t resultCount = resultsNodes.size();
+	size_t paramCount = parameterNodes.size();
+	bool hasParam = startOutputParam < resultCount || 0 < paramCount;
+
+	if (methodNode->isStatic())
+	{
+		if (methodNode->m_nativeName)
+		{
+			sprintf_s(buf, "%s(", methodNameNode->m_str.c_str());
+		}
+		else
+		{
+			sprintf_s(buf, "%s::%s(", className.c_str(), methodNameNode->m_str.c_str());
+		}
+	}
+	else
+	{
+		if (methodNameNode->m_str.find(':') != std::string::npos)
+		{
+			sprintf_s(buf, "%s(self%s", methodNameNode->m_str.c_str(), hasParam ? ", " : "");
+		}
+		else
+		{
+			sprintf_s(buf, "self->%s(", methodNameNode->m_str.c_str());
+		}
+	}
+	writeStringToFile(buf, file, 0);
+
+	for (size_t i = startOutputParam; i < resultCount; ++i)
+	{
+		VariableTypeNode* resultNode = resultsNodes[i];
+		bool lastParam = (i + 1) == resultCount && 0 == paramCount;
+		writeMetaMethodImpl_UseOutputParam(classNode, templateArguments, resultNode, i, lastParam, file);
+	}
+
+	for (size_t i = 0; i < paramCount; ++i)
+	{
+		ParameterNode* parameterNode = parameterNodes[i];
+		writeMetaMethodImpl_UseParam(classNode, templateArguments, parameterNode, i, file);
+	}
+	if (resultNode)
+	{
+		writeStringToFile(")", file, 0);
+	}
+	writeStringToFile(");\n", file, 0);
+}
+
+void writeMetaMethodImpl_CastOutputParam(ClassNode* classNode, TemplateArguments* templateArguments, VariableTypeNode* outputNode, size_t paramIndex, FILE* file, int indentation)
+{
+	char buf[4096];
+	std::string typeName;
+	TypeCategory typeCategory = CalcTypeNativeName(typeName, outputNode->m_typeName, templateArguments);
+
+	switch (outputNode->m_typeCompound)
+	{
+	case tc_raw_ptr:
+		sprintf_s(buf, "results[%zd].assignRawPtr(res%zd);\n", paramIndex, paramIndex);
+		break;
+	case tc_raw_array:
+		sprintf_s(buf, "results[%zd].assignRawArray(res%zd);\n", paramIndex, paramIndex);
+		break;
+	case tc_shared_ptr:
+		sprintf_s(buf, "results[%zd].assignSharedPtr(res%zd);\n", paramIndex, paramIndex);
+		break;
+	case tc_shared_array:
+		sprintf_s(buf, "results[%zd].assignSharedArray(res%zd);\n", paramIndex, paramIndex);
+		break;
+	default:
+		sprintf_s(buf, "results[%zd].assignValue(res%zd);\n", paramIndex, paramIndex);
+	}
+	writeStringToFile(buf, file, indentation + 1);
+}
+
 
 void MetaSourceFileGenerator::generateCode(FILE* dstFile, SourceFile* sourceFile, const char* fullPathName, const char* baseName)
 {
@@ -1171,101 +1304,6 @@ void writeMetaPropertyImpls(ClassNode* classNode, TemplateArguments* templateArg
 const char g_metaMethodImplPrefix[] = "::paf::ErrorCode ";
 const char g_metaMethodImplPostfix[] = "(::paf::Variant* results, uint32_t& numResults, ::paf::Variant** args, uint32_t numArgs)\n";
 
-void writeMetaMethodImpl_CastSelf(ClassNode* classNode, TemplateArguments* templateArguments, MethodNode* methodNode, FILE* file, int indentation)
-{
-	char buf[4096];
-	std::string className;
-	classNode->getNativeName(className, templateArguments);
-	sprintf_s(buf, "%s* self;\n", className.c_str());
-	writeStringToFile(buf, file, indentation);
-	writeStringToFile("if(!args[0]->castToRawPointer(GetSingleton(), (void**)&self))\n", file, indentation);
-	writeStringToFile("{\n", file, indentation);
-	writeStringToFile("return ::paf::ErrorCode::e_invalid_this_type;\n", file, indentation + 1);
-	writeStringToFile("}\n", file, indentation);
-}
-
-
-
-void writeMetaMethodImpl_Call(ClassNode* classNode, TemplateArguments* templateArguments, MethodNode* methodNode, std::vector<ParameterNode*>& parameterNodes, size_t usedParamCount, bool isStatic, FILE* file, int indentation)
-{
-	char buf[4096];
-	std::string className;
-	classNode->getNativeName(className, templateArguments);
-
-	IdentifyNode* methodNameNode = methodNode->m_nativeName ? methodNode->m_nativeName : methodNode->m_name;
-
-	//size_t paramCount = parameterNodes.size();
-	//sprintf_s(buf, "if(%zd == numArgs)\n", usedParamCount + (isStatic ? 0 : 1));
-	//writeStringToFile(buf, file, indentation);
-	//writeStringToFile("{\n", file, indentation);
-
-	VariableTypeNode* resultNode = nullptr;
-	if (!methodNode->m_voidResult && methodNode->m_resultList)
-	{
-		resultNode = methodNode->m_resultList->getFirstVariableType();
-	}
-	if (resultNode)
-	{
-		switch (resultNode->m_typeCompound)
-		{
-		case tc_raw_ptr:
-			writeStringToFile("results[0].assignRawPtr(", file, indentation);
-			break;
-		case tc_raw_array:
-			writeStringToFile("results[0].assignRawArray(", file, indentation);
-			break;
-		case tc_shared_ptr:
-			writeStringToFile("results[0].assignSharedPtr(", file, indentation);
-			break;
-		case tc_shared_array:
-			writeStringToFile("results[0].assignSharedArray(", file, indentation);
-			break;
-		default:
-			writeStringToFile("results[0].assignValue(", file, indentation);
-		}
-	}
-	else
-	{
-		writeStringToFile("", file, indentation);
-	}
-
-
-	if (methodNode->isStatic())
-	{
-		if (methodNode->m_nativeName)
-		{
-			sprintf_s(buf, "%s(", methodNameNode->m_str.c_str());
-		}
-		else
-		{
-			sprintf_s(buf, "%s::%s(", className.c_str(), methodNameNode->m_str.c_str());
-		}
-	}
-	else
-	{
-		if (methodNameNode->m_str.find(':') != std::string::npos)
-		{
-			sprintf_s(buf, "%s(self%s", methodNameNode->m_str.c_str(), 0 == usedParamCount ? "" : ", ");
-		}
-		else
-		{
-			sprintf_s(buf, "self->%s(", methodNameNode->m_str.c_str());
-		}
-	}
-	writeStringToFile(buf, file, 0);
-	for (size_t i = 0; i < usedParamCount; ++i)
-	{
-		ParameterNode* parameterNode = parameterNodes[i];
-		writeMetaMethodImpl_UseParam(classNode, templateArguments, parameterNode, i, file);
-	}
-	if (resultNode)
-	{
-		writeStringToFile(")", file, 0);
-	}
-	writeStringToFile(");\n", file, 0);
-
-	//writeStringToFile("}\n", file, indentation);
-}
 
 void writeMetaMethodImpl(
 	ClassNode* classNode, 
@@ -1288,6 +1326,22 @@ void writeMetaMethodImpl(
 	writeStringToFile(g_metaMethodImplPostfix, file);
 	writeStringToFile("{\n", file, indentation);
 
+	std::vector<VariableTypeNode*> resultNodes;
+	if (methodNode->m_resultList)
+	{
+		methodNode->m_resultList->collectVariableTypeNodes(resultNodes);
+	}
+	size_t resultCount = resultNodes.size();
+
+	if (0 < resultCount)
+	{
+		sprintf_s(buf, "if(numResults < %zd)\n", resultCount);
+		writeStringToFile(buf, file, indentation + 1);
+		writeStringToFile("{\n", file, indentation + 1);
+		writeStringToFile("return ::paf::ErrorCode::e_too_few_results;\n", file, indentation + 2);
+		writeStringToFile("}\n", file, indentation + 1);
+	}
+
 	std::vector<ParameterNode*> parameterNodes;
 	methodNode->m_parameterList->collectParameterNodes(parameterNodes);
 	size_t paramCount = parameterNodes.size();
@@ -1309,6 +1363,7 @@ void writeMetaMethodImpl(
 	writeStringToFile("{\n", file, indentation + 1);
 	writeStringToFile("return ::paf::ErrorCode::e_too_many_arguments;\n", file, indentation + 2);
 	writeStringToFile("}\n", file, indentation + 1);
+
 	if (!isStatic)
 	{
 		writeMetaMethodImpl_CastSelf(classNode, templateArguments, methodNode, file, indentation + 1);
@@ -1326,29 +1381,20 @@ void writeMetaMethodImpl(
 		writeMetaMethodImpl_CastParam(classNode, templateArguments, parameterNode, argIndex, i, file, indentation);
 	}
 
-	std::vector<VariableTypeNode*> resultNodes;
-	if (methodNode->m_resultList)
-	{
-		methodNode->m_resultList->collectVariableTypeNodes(resultNodes);
-	}
-	size_t resultCount = resultNodes.size();
 	size_t startOutputParam = methodNode->m_voidResult ? 0 : 1;
 	for (size_t i = startOutputParam; i < resultCount; ++i)
 	{
-		size_t argIndex = methodNode->m_voidResult ? i : i - 1;
-		writeMetaMethodImpl_DeclareOutputParam(classNode, templateArguments, resultNodes[i], argIndex, i, file, indentation);
+		writeMetaMethodImpl_DeclareOutputParam(classNode, templateArguments, resultNodes[i], i, file, indentation);
 	}
 	
-
-	writeMetaMethodImpl_Call(classNode, templateArguments, methodNode, parameterNodes, paramCount, isStatic, file, indentation + 1);
+	writeMetaMethodImpl_Call(classNode, templateArguments, methodNode, resultNodes, parameterNodes, isStatic, file, indentation + 1);
 	
 	for (size_t i = startOutputParam; i < resultCount; ++i)
 	{
-		size_t argIndex = methodNode->m_voidResult ? i : i - 1;
-		//writeMetaMethodImpl_CastOutputParam(classNode, templateArguments, resultNodes[i], argIndex, i, file, indentation);
+		writeMetaMethodImpl_CastOutputParam(classNode, templateArguments, resultNodes[i], i, file, indentation);
 	}
-	
-
+	sprintf_s(buf, "numResults = %zd;\n", resultCount);
+	writeStringToFile(buf, file, indentation + 1);
 	writeStringToFile("return ::paf::ErrorCode::s_ok;\n", file, indentation + 1);
 	writeStringToFile("}\n\n", file, indentation);
 }

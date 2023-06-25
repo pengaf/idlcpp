@@ -653,7 +653,7 @@ void writeInterfaceMethodDecl(MethodNode* methodNode, FILE* file, int indentatio
 	{
 		writeStringToFile(" const", file, indentation);
 	}
-	writeStringToFile(";\n", file);
+	writeStringToFile(" override;\n", file);
 }
 
 
