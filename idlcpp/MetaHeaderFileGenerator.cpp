@@ -524,8 +524,8 @@ void MetaHeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNod
 	if (nullptr == classNode->m_category || classNode->m_category->m_str == "object" || classNode->m_category->m_str == "string" || classNode->m_category->m_str == "buffer")
 	{
 		writeStringToFile("public:\n", file, indentation);
-		writeStringToFile("virtual ::paf::ErrorCode placementNew(void* address, ::paf::Variant** args, uint32_t numArgs);\n", file, indentation + 1);
-		writeStringToFile("virtual bool placementNewArray(void* address, size_t count) override;\n", file, indentation + 1);
+		writeStringToFile("virtual ::paf::ErrorCode construct(void* address, ::paf::Variant** args, uint32_t numArgs);\n", file, indentation + 1);
+		writeStringToFile("virtual bool constructArray(void* address, size_t count) override;\n", file, indentation + 1);
 		writeStringToFile("virtual bool destruct(void* self) override;\n", file, indentation + 1);
 		writeStringToFile("virtual bool copyAssign(void* self, const void* src) override;\n", file, indentation + 1);
 		if (!assignOperatorNodes.empty())

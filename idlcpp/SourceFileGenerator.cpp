@@ -62,10 +62,10 @@ void SourceFileGenerator::generateCode_Program(FILE* file, ProgramNode* programN
 
 void SourceFileGenerator::generateCode_Namespace(FILE* file, NamespaceNode* namespaceNode, int indentation)
 {
-	//if (namespaceNode->isNoCode())
-	//{
-	//	file = 0;
-	//}
+	if (namespaceNode->isNoCode())
+	{
+		file = 0;
+	}
 
 	char buf[4096];
 	if(!namespaceNode->isGlobalNamespace())
@@ -120,10 +120,10 @@ void GetClassName(std::string& className, ClassNode* classNode)
 
 void SourceFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, const std::string& scopeClassName, int indentation)
 {
-	//if (classNode->isNoCode())
-	//{
-	//	file = 0;
-	//}
+	if (classNode->isNoCode() || classNode->m_nativeName)
+	{
+		file = 0;
+	}
 	std::string typeName;
 	GetClassName(typeName, classNode);
 	typeName = scopeClassName + typeName;

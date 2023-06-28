@@ -13,6 +13,11 @@ int yycolumnno = 1;
 int yyHasCollectionProperty = 0;
 %}
 
+DIGIT [0-9]
+HEX_DIGIT [0-9a-fA-F]
+EXPONENT [eE][+-]?{DIGIT}+
+SUFFIX [fFlLuU]?
+
 %%
 
 "#import"[ \t]*\"	{BEGIN IFILE;}
@@ -44,13 +49,15 @@ int yyHasCollectionProperty = 0;
 
 
 
-"//".*\n			{newCodeBlock("\n"); yycolumnno = 1;}
+"//".*\n						{newCodeBlock("\n"); yycolumnno = 1;}
 
-<<EOF>>				{yyterminate();}
+<<EOF>>							{yyterminate();}
 
-\#\#.*				{newCodeBlock(yytext + 2); yycolumnno += (int)strlen(yytext); yytokenno++;}
+\#\#.*							{newCodeBlock(yytext + 2); yycolumnno += (int)strlen(yytext); yytokenno++;}
+\#[a-zA-Z_0-9]+					{newCodeBlock(yytext + 1); yycolumnno += (int)strlen(yytext); yytokenno++;}
+\#\"([^\"\\\n]|(\\.))*\"		{newCodeBlock(yytext + 1); yycolumnno += (int)strlen(yytext); yytokenno++;}
+\#-?({DIGIT}+|0[xX]{HEX_DIGIT}+|0[0-7]+)(\.{DIGIT}+)?{EXPONENT}?{SUFFIX}{0,2}   {newCodeBlock(yytext + 1); yycolumnno += (int)strlen(yytext); yytokenno++;}
 
-\#[a-zA-Z_0-9]+		{newCodeBlock(yytext + 1); yycolumnno += (int)strlen(yytext); yytokenno++;}
 
 "*" |
 "^" |
@@ -104,8 +111,8 @@ int yyHasCollectionProperty = 0;
 
 [a-zA-Z_][a-zA-Z_0-9]*	{yylval.sn = newIdentify(yytext);					yycolumnno += (int)strlen(yytext); yytokenno++; return IDENTIFY;}
 
-\"[^\"]*\"				{yylval.sn = newString(yytext + 1);					yycolumnno += (int)strlen(yytext); yytokenno++; return STRING;}
-u8\"[^\"]*\"			{yylval.sn = newString(yytext + 3);					yycolumnno += (int)strlen(yytext); yytokenno++; return U8STRING;}
+\"([^\"\\\n]|(\\.))*\"				{yylval.sn = newString(yytext + 1);					yycolumnno += (int)strlen(yytext); yytokenno++; return STRING;}
+u8\"([^\"\\\n]|(\\.))*\"			{yylval.sn = newString(yytext + 3);					yycolumnno += (int)strlen(yytext); yytokenno++; return U8STRING;}
 
 [ \t]							{++yycolumnno;}
 "\n"							{newCodeBlock(yytext); yycolumnno = 1;}

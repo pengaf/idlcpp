@@ -545,13 +545,13 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 	classNode->getNativeName(className, templateArguments);
 
 	//placement new
-	sprintf_s(buf, "::paf::ErrorCode %s::placementNew(void* address, ::paf::Variant** args, uint32_t numArgs)\n", metaClassName.c_str());
+	sprintf_s(buf, "::paf::ErrorCode %s::construct(void* address, ::paf::Variant** args, uint32_t numArgs)\n", metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
 
 	writeStringToFile("if(numArgs == 0)\n", file, indentation + 1);
 	writeStringToFile("{\n", file, indentation + 1);
-	sprintf_s(buf, "return ::paf::PlacementNewDefaultCaller<%s>::Call(address) ? ::paf::ErrorCode::s_ok : ::paf::ErrorCode::e_not_implemented;\n", className.c_str());
+	sprintf_s(buf, "return ::paf::DefaultConstructorCaller<%s>::Call(address) ? ::paf::ErrorCode::s_ok : ::paf::ErrorCode::e_not_implemented;\n", className.c_str());
 	writeStringToFile(buf, file, indentation + 2);
 	writeStringToFile("}\n", file, indentation + 1);
 	writeStringToFile("else if(numArgs == 1)\n", file, indentation + 1);
@@ -559,7 +559,7 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 	writeStringToFile("void* other;\n", file, indentation + 2);
 	writeStringToFile("if(args[0]->castToRawPointer(this, &other))\n", file, indentation + 2);
 	writeStringToFile("{\n", file, indentation + 2);
-	sprintf_s(buf, "return ::paf::PlacementNewCopyCaller<%s>::Call(address, other) ? ::paf::ErrorCode::s_ok : ::paf::ErrorCode::e_not_implemented;\n", className.c_str());
+	sprintf_s(buf, "return ::paf::CopyConstructorCaller<%s>::Call(address, other) ? ::paf::ErrorCode::s_ok : ::paf::ErrorCode::e_not_implemented;\n", className.c_str());
 	writeStringToFile(buf, file, indentation + 3);
 	writeStringToFile("}\n", file, indentation + 2);
 	if (!constructor)
@@ -601,10 +601,10 @@ void writeOverrideFunction(ClassNode* classNode, TemplateArguments* templateArgu
 	writeStringToFile("return ::paf::ErrorCode::e_too_many_arguments;\n", file, indentation + 1);
 
 	writeStringToFile("}\n\n", file, indentation);
-	sprintf_s(buf, "bool %s::placementNewArray(void* address, size_t count)\n", metaClassName.c_str());
+	sprintf_s(buf, "bool %s::constructArray(void* address, size_t count)\n", metaClassName.c_str());
 	writeStringToFile(buf, file, indentation);
 	writeStringToFile("{\n", file, indentation);
-	sprintf_s(buf, "return ::paf::PlacementNewArrayCaller<%s>::Call(address, count);\n", className.c_str());
+	sprintf_s(buf, "return ::paf::ArrayConstructorCaller<%s>::Call(address, count);\n", className.c_str());
 	writeStringToFile(buf, file, indentation + 1);
 	writeStringToFile("}\n\n", file, indentation);
 
