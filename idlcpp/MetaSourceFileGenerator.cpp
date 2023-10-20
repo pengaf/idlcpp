@@ -76,8 +76,6 @@ const char* typeCompoundToString(TypeCompound typeCompound)
 	{
 	case tc_raw_ptr:
 		return "::paf::TypeCompound::raw_ptr";
-	case tc_raw_array:
-		return "::paf::TypeCompound::raw_array";
 	case tc_shared_ptr:
 		return "::paf::TypeCompound::shared_ptr";
 	case tc_shared_array:
@@ -200,13 +198,6 @@ void writeMetaMethodImpl_CastParam(ClassNode* classNode, TemplateArguments* temp
 		sprintf_s(buf, "if(%s!args[%zd]->castToRawPtr<%s>(a%zd))\n", argNumTest.c_str(), argIndex, typeName.c_str(), paramIndex);
 		writeStringToFile(buf, file, indentation + 1);
 	}
-	else if (tc_raw_array == parameterNode->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::array_t<%s> a%zd%s;\n", typeName.c_str(), paramIndex, defaultValue.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(%s!args[%zd]->castToRawArray<%s>(a%zd))\n", argNumTest.c_str(), argIndex, typeName.c_str(), paramIndex);
-		writeStringToFile(buf, file, indentation + 1);
-	}
 	else if (tc_shared_ptr == parameterNode->m_typeCompound)
 	{
 		sprintf_s(buf, "::paf::SharedPtr<%s> a%zd%s;\n", typeName.c_str(), paramIndex, defaultValue.c_str());
@@ -239,9 +230,6 @@ void writeMetaMethodImpl_DeclareOutputParam(ClassNode* classNode, TemplateArgume
 	case tc_raw_ptr:
 		sprintf_s(buf, "%s* a%zd;\n", typeName.c_str(), paramIndex);
 		break;
-	case tc_raw_array:
-		sprintf_s(buf, "::paf::array_t<%s> res%zd;\n", typeName.c_str(), paramIndex);
-		break;
 	case tc_shared_ptr:
 		sprintf_s(buf, "::paf::SharedPtr<%s> res%zd;\n", typeName.c_str(), paramIndex);
 		break;
@@ -272,9 +260,6 @@ void writeMetaMethodImpl_Call(ClassNode* classNode, TemplateArguments* templateA
 		{
 		case tc_raw_ptr:
 			writeStringToFile("results[0].assignRawPtr(", file, indentation);
-			break;
-		case tc_raw_array:
-			writeStringToFile("results[0].assignRawArray(", file, indentation);
 			break;
 		case tc_shared_ptr:
 			writeStringToFile("results[0].assignSharedPtr(", file, indentation);
@@ -349,9 +334,6 @@ void writeMetaMethodImpl_CastOutputParam(ClassNode* classNode, TemplateArguments
 	{
 	case tc_raw_ptr:
 		sprintf_s(buf, "results[%zd].assignRawPtr(res%zd);\n", paramIndex, paramIndex);
-		break;
-	case tc_raw_array:
-		sprintf_s(buf, "results[%zd].assignRawArray(res%zd);\n", paramIndex, paramIndex);
 		break;
 	case tc_shared_ptr:
 		sprintf_s(buf, "results[%zd].assignSharedPtr(res%zd);\n", paramIndex, paramIndex);
@@ -961,9 +943,6 @@ void writeMetaPropertyGetImpl(ClassNode* classNode, TemplateArguments* templateA
 	case tc_raw_ptr:
 		writeStringToFile("value->assignRawPtr(", file, indentation + 1);
 		break;
-	case tc_raw_array:
-		writeStringToFile("value->assignRawArray(", file, indentation + 1);
-		break;
 	case tc_shared_ptr:
 		writeStringToFile("value->assignSharedPtr(", file, indentation + 1);
 		break;
@@ -1103,13 +1082,6 @@ void writeMetaPropertySetImpl(ClassNode* classNode, TemplateArguments* templateA
 		sprintf_s(buf, "%s* arg;\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 		sprintf_s(buf, "if(!value->castToRawPtr<%s>(arg))\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-	}
-	else if (tc_raw_array == propertyNode->m_typeCompound)
-	{
-		sprintf_s(buf, "::paf::array_t<%s> arg;\n", typeName.c_str());
-		writeStringToFile(buf, file, indentation + 1);
-		sprintf_s(buf, "if(!value->castToRawArray<%s>(arg))\n", typeName.c_str());
 		writeStringToFile(buf, file, indentation + 1);
 	}
 	else if (tc_shared_ptr == propertyNode->m_typeCompound)
@@ -2774,9 +2746,6 @@ void writeInterfaceMethodImpl_AssignParam(ParameterNode* parameterNode, size_t a
 	case tc_raw_ptr:
 		sprintf_s(buf, "__arguments__[%zd].assignRawPtr<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
 		break;
-	case tc_raw_array:
-		sprintf_s(buf, "__arguments__[%zd].assignRawArray<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
-		break;
 	case tc_shared_ptr:
 		sprintf_s(buf, "__arguments__[%zd].assignSharedPtr<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
 		break;
@@ -2784,7 +2753,7 @@ void writeInterfaceMethodImpl_AssignParam(ParameterNode* parameterNode, size_t a
 		sprintf_s(buf, "__arguments__[%zd].assignSharedArray<%s>(%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
 		break;
 	default:
-		sprintf_s(buf, "__arguments__[%zd].assignRawPtr<%s>(&%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
+		sprintf_s(buf, "__arguments__[%zd].assignReference<%s>(&%s);\n", argIndex, typeName.c_str(), parameterNode->m_name->m_str.c_str());
 	}
 	writeStringToFile(buf, file, indentation);
 }
@@ -2801,9 +2770,6 @@ void writeInterfaceMethodImpl_CastOutputParam(VariableTypeNode* resultNode, size
 		break;
 	case tc_raw_ptr:
 		sprintf_s(buf, "__results__[%zd].castToRawPtr<%s>(output%zd);\n", argIndex, typeName.c_str(), argIndex);
-		break;
-	case tc_raw_array:
-		sprintf_s(buf, "__results__[%zd].castToRawArray<%s>(output%zd);\n", argIndex, typeName.c_str(), argIndex);
 		break;
 	case tc_shared_ptr:
 		sprintf_s(buf, "__results__[%zd].castToSharedPtr<%s>(output%zd);\n", argIndex, typeName.c_str(), argIndex);
@@ -2831,9 +2797,6 @@ void writeInterfaceMethodImpl_CastResult(MethodNode* methodNode, VariableTypeNod
 		break;
 	case tc_raw_ptr:
 		sprintf_s(buf, "__results__[0].castToRawPtr<%s>(__res__);\n", typeName.c_str());
-		break;
-	case tc_raw_array:
-		sprintf_s(buf, "__results__[0].castToRawArray<%s>(__res__);\n", typeName.c_str());
 		break;
 	case tc_shared_ptr:
 		sprintf_s(buf, "__results__[0].castToSharedPtr<%s>(__res__);\n", typeName.c_str());

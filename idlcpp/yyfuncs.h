@@ -53,7 +53,6 @@ enum TypeCompound
 {
 	tc_none,
 	tc_raw_ptr,
-	tc_raw_array,
 	tc_shared_ptr,
 	tc_shared_array,
 };

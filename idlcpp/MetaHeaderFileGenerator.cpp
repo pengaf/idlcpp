@@ -42,9 +42,6 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	std::string name;
 	switch (typeCompound)
 	{
-	case tc_raw_array:
-		name = "::paf::array_t<";
-		break;
 	case tc_shared_ptr:
 		name = "::paf::SharedPtr<";
 		break;
@@ -61,8 +58,9 @@ std::string CalcCompoundTypeName(TypeNameNode* typeNameNode, TypeCompound typeCo
 	case tc_raw_ptr:
 		name += "*";
 		break;
-	case tc_raw_array:
 	case tc_shared_ptr:
+		name += ">";
+		break;
 	case tc_shared_array:
 		name += ">";
 		break;

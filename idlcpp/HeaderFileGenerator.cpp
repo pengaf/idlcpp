@@ -131,9 +131,6 @@ void generateCode_CompoundTypeName(FILE* file, TypeNameNode* typeNameNode, TypeC
 	writeIndentationsToFile(file, indentation);
 	switch (typeCompound)
 	{
-	case tc_raw_array:
-		writeStringToFile("::paf::array_t<", file);
-		break;
 	case tc_shared_ptr:
 		writeStringToFile("::paf::SharedPtr<", file);
 		break;
@@ -153,8 +150,9 @@ void generateCode_CompoundTypeName(FILE* file, TypeNameNode* typeNameNode, TypeC
 	case tc_raw_ptr:
 		writeStringToFile("*", file);
 		break;
-	case tc_raw_array:
 	case tc_shared_ptr:
+		writeStringToFile(">", file);
+		break;
 	case tc_shared_array:
 		writeStringToFile(">", file);
 		break;

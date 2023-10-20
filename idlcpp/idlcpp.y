@@ -131,7 +131,6 @@ typeAlias				: TYPEDEF typeName IDENTIFY ';'							{$$ = newTypedef($1, $3, $2);
 variableType			: typeName												{$$ = newVariableType($1, tc_none);}
 						| typeName '*'											{$$ = newVariableType($1, tc_raw_ptr);}
 						| typeName '^'											{$$ = newVariableType($1, tc_shared_ptr);}
-						| typeName '[' ']' '*' 									{$$ = newVariableType($1, tc_raw_array);}
 						| typeName '[' ']' '^' 									{$$ = newVariableType($1, tc_shared_array);}
 ;
 
