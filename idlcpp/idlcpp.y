@@ -15,7 +15,7 @@
 %type <sn> field_0 field_1 field getter_0 getter setter_0 setter property_0 property_1 property
 %type <sn> parameter_0 parameter parameterList method_0 method_1 method_2 method_3 method
 %type <sn> operator_assign operator_cast operator
-%type <sn> classMember_0 classMember
+%type <sn> classMember_0 classMember, baseClass, baseClassList
 %type <sn> primitive scopeName scopeNameList_0 scopeNameList typeName typeNameList classMemberList tokenList
 %type <sn> templateParameterList templateParameters templateClassInstance_0 templateClassInstance
 %type <sn> class_0 class_1 class_2 class_3 class_4 class_5 class namespaceMember_0 namespaceMember namespaceMemberList namespace program
@@ -265,6 +265,16 @@ templateParameterList	: IDENTIFY												{$$ = newTemplateParameterList(NULL,
 templateParameters		: TEMPLATE '<' templateParameterList '>'				{$$ = newTemplateParameters($1, $2, $3, $4);}
 ;
 
+baseClass				: typeName												{$$ = newBaseClass($1, NULL);}
+						| NOCODE typeName										{$$ = newBaseClass($2, $1);}
+						| NOMETA typeName										{$$ = newBaseClass($2, $1);}
+;
+
+baseClassList			: baseClass												{$$ = newBaseClassList(NULL, NULL, $1);}
+						| baseClassList ',' baseClass							{$$ = newBaseClassList($1, $2, $3);}
+;
+
+
 class_0					: CLASS IDENTIFY										{$$ = newClass($1, NULL, $2);}
 						| CLASS '(' identifyList ')' IDENTIFY 					{$$ = newClass($1, $3, $5);}
 						| STRUCT IDENTIFY										{$$ = newClass($1, NULL, $2);}
@@ -272,7 +282,7 @@ class_0					: CLASS IDENTIFY										{$$ = newClass($1, NULL, $2);}
 ;
 
 class_1					: class_0												{$$ = $1;}
-						| class_0 ':' typeNameList								{$$ = $1; setClassBaseList($$, $2, $3);}
+						| class_0 ':' baseClassList								{$$ = $1; setClassBaseList($$, $2, $3);}
 ;
 
 class_2					: class_1 '{' '}'										{$$ = $1; setClassMemberList($$, $2, NULL, $3);}

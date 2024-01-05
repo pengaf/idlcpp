@@ -24,7 +24,7 @@ TypeNameNode::TypeNameNode(TokenNode* keyword, PredefinedType primitiveType)
 	m_nodeType = snt_type_name;
 	m_keyword = keyword;
 	m_scopeNameList = 0;
-	m_filterNode = 0;
+	//m_filterNode = 0;
 	m_startTypeNode = g_typeTree.getPredefinedTypeNode(primitiveType);
 	m_typeNode = m_startTypeNode;
 }
@@ -34,20 +34,20 @@ TypeNameNode::TypeNameNode(ScopeNameListNode* scopeNameList)
 	m_nodeType = snt_type_name;
 	m_keyword = 0;
 	m_scopeNameList = scopeNameList;
-	m_filterNode = 0;
+	//m_filterNode = 0;
 	m_startTypeNode = 0;
 	m_typeNode = 0;
 }
 
-bool TypeNameNode::isNoCode()
-{
-	return (m_filterNode && snt_keyword_nocode == m_filterNode->m_nodeType);
-}
-
-bool TypeNameNode::isNoMeta()
-{
-	return (m_filterNode && snt_keyword_nometa == m_filterNode->m_nodeType);
-}
+//bool TypeNameNode::isNoCode()
+//{
+//	return (m_filterNode && snt_keyword_nocode == m_filterNode->m_nodeType);
+//}
+//
+//bool TypeNameNode::isNoMeta()
+//{
+//	return (m_filterNode && snt_keyword_nometa == m_filterNode->m_nodeType);
+//}
 
 bool TypeNameNode::calcTypeNodes(TypeNode* enclosingTypeTreeNode, TemplateArguments* templateArguments)
 {

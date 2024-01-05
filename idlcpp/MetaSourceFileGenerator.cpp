@@ -16,6 +16,8 @@
 #include "typeDeclarationNode.h"
 #include "TypeNameListNode.h"
 #include "TypeNameNode.h"
+#include "BaseClassListNode.h"
+#include "BaseClassNode.h"
 #include "MemberListNode.h"
 #include "FieldNode.h"
 #include "PropertyNode.h"
@@ -1261,11 +1263,11 @@ void writeMetaPropertyImpls(ClassNode* classNode, TemplateArguments* templateArg
 			{
 				writeMetaPropertySetImpl(classNode, templateArguments, propertyNodes[i], file, indentation);
 			}
-			if (propertyNode->isArray())
+			if (propertyNode->isArray() || propertyNode->isCollection())
 			{
 				writeMetaPropertySizeImpl(classNode, templateArguments, propertyNodes[i], file, indentation);
 			}
-			else if (propertyNode->isCollection())
+			if (propertyNode->isCollection())
 			{
 				writeMetaPropertyIteratorImpl(classNode, templateArguments, propertyNodes[i], file, indentation);
 			}
@@ -1798,21 +1800,23 @@ void writeMetaConstructor_Properties(ClassNode* classNode, TemplateArguments* te
 		}
 		else if (propertyNode->isCollection())
 		{
-			char iterateFunc[256];
+			char sizeFunc[256];
+			sprintf_s(sizeFunc, "%s_size_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
 
+			char iterateFunc[256];
 			sprintf_s(iterateFunc, "%s_iterate_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
 
 			if (isStatic)
 			{
-				sprintf_s(buf, "::paf::StaticProperty(\"%s\", %s, %s, %s, %s, %s, %s),\n",
+				sprintf_s(buf, "::paf::StaticProperty(\"%s\", %s, %s, %s, %s, %s, %s, %s),\n",
 					propertyNode->m_name->m_str.c_str(), strAttributes, valueType,
-					typeCompound, iterateFunc, getterFunc, setterFunc);
+					typeCompound, sizeFunc, iterateFunc, getterFunc, setterFunc);
 			}
 			else
 			{
-				sprintf_s(buf, "::paf::InstanceProperty(\"%s\", %s, GetSingleton(), %s, %s, %s, %s, %s),\n",
+				sprintf_s(buf, "::paf::InstanceProperty(\"%s\", %s, GetSingleton(), %s, %s, %s, %s, %s, %s),\n",
 					propertyNode->m_name->m_str.c_str(), strAttributes, valueType,
-					typeCompound, iterateFunc, getterFunc, setterFunc);
+					typeCompound, sizeFunc, iterateFunc, getterFunc, setterFunc);
 			}
 		}
 		else
@@ -2305,13 +2309,13 @@ void writeMetaConstructor_BaseClasses(ClassNode* classNode, TemplateArguments* t
 {
 	char buf[4096];
 	std::string typeName;
-	std::vector<std::pair<TokenNode*, TypeNameNode*>> tempNodes;
-	classNode->m_baseList->collectTypeNameNodesNotNoMeta(tempNodes);
+	std::vector<std::pair<TokenNode*, BaseClassNode*>> baseClassNodes;
+	classNode->m_baseList->collectBaseClassNodesNotNoMeta(baseClassNodes);
 	std::vector<TypeNameNode*> typeNameNodes;
-	size_t count = tempNodes.size();
+	size_t count = baseClassNodes.size();
 	for (size_t i = 0; i < count; ++i)
 	{
-		TypeNameNode* typeNameNode = tempNodes[i].second;
+		TypeNameNode* typeNameNode = baseClassNodes[i].second->m_typeName;
 		TypeNode* typeNode = typeNameNode->getActualTypeNode(templateArguments);
 		if (!typeNode->getSyntaxNode()->isNoMeta())
 		{
@@ -2348,13 +2352,13 @@ void writeMetaConstructor_ClassTypeIterators(ClassNode* classNode, TemplateArgum
 {
 	char buf[4096];
 	std::string typeName;
-	std::vector<std::pair<TokenNode*, TypeNameNode*>> tempNodes;
-	classNode->m_baseList->collectTypeNameNodesNotNoMeta(tempNodes);
+	std::vector<std::pair<TokenNode*, BaseClassNode*>> baseClassNodes;
+	classNode->m_baseList->collectBaseClassNodesNotNoMeta(baseClassNodes);
 	std::vector<TypeNameNode*> typeNameNodes;
-	size_t count = tempNodes.size();
+	size_t count = baseClassNodes.size();
 	for (size_t i = 0; i < count; ++i)
 	{
-		TypeNameNode* typeNameNode = tempNodes[i].second;
+		TypeNameNode* typeNameNode = baseClassNodes[i].second->m_typeName;
 		TypeNode* typeNode = typeNameNode->getActualTypeNode(templateArguments);
 		if (!typeNode->getSyntaxNode()->isNoMeta())
 		{

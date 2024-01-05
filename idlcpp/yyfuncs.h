@@ -127,6 +127,8 @@ enum SyntaxNodeType
 	snt_template_parameter,
 	snt_template_parameter_list,
 	snt_template_parameters,
+	snt_base_class,
+	snt_base_class_list,
 	snt_getter,
 	snt_setter,
 	snt_field,
@@ -177,7 +179,7 @@ void setScopeNameListGlobal(SyntaxNode* scopeNameList);
 SyntaxNode* newTypeName(SyntaxNode* scopeNameList);
 SyntaxNode* newTypeNameList(SyntaxNode* typeNameList, SyntaxNode* delimiter, SyntaxNode* typeName);
 
-void setTypeNameFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode);
+//void setTypeNameFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode);
 void setMemberFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode);
 void setNativeName(SyntaxNode* syntaxNode, SyntaxNode* nativeName);
 
@@ -216,8 +218,11 @@ void setMethodSemicolon(SyntaxNode* syntaxNode, SyntaxNode* semicolon);
 SyntaxNode* newAssignOperator(SyntaxNode* keyword, SyntaxNode* sign, SyntaxNode* leftParenthesis, SyntaxNode* paramTypeName, ParameterPassing paramPassing, SyntaxNode* rightParenthesis, SyntaxNode* semicolon);
 SyntaxNode* newCastOperator(SyntaxNode* keyword, SyntaxNode* resultTypeName, SyntaxNode* leftParenthesis, SyntaxNode* rightParenthesis, SyntaxNode* constant, SyntaxNode* semicolon);
 
+
 SyntaxNode* newClassMemberList(SyntaxNode* memberList, SyntaxNode* member);
 SyntaxNode* newClass(SyntaxNode* keyword, SyntaxNode* category, SyntaxNode* name);
+SyntaxNode* newBaseClass(SyntaxNode* typeName, SyntaxNode* filter);
+SyntaxNode* newBaseClassList(SyntaxNode* baseClassList, SyntaxNode* delimiter, SyntaxNode* baseClass);
 void setClassBaseList(SyntaxNode* cls, SyntaxNode* colon, SyntaxNode* baseList);
 void setClassMemberList(SyntaxNode* cls, SyntaxNode* leftBrace, SyntaxNode* memberList, SyntaxNode* rightBrace);
 void setClassModifier(SyntaxNode* cls, SyntaxNode* modifier);

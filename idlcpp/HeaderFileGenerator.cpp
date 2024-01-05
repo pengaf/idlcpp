@@ -16,6 +16,8 @@
 #include "TemplateParameterListNode.h"
 #include "TypeNameListNode.h"
 #include "TypeNameNode.h"
+#include "BaseClassListNode.h"
+#include "BaseClassNode.h"
 #include "FieldNode.h"
 #include "PropertyNode.h"
 #include "MethodNode.h"
@@ -376,9 +378,9 @@ void HeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, i
 
 	if(classNode->m_baseList)
 	{
-		std::vector<std::pair<TokenNode*, TypeNameNode*>> typeNameNodes;
-		classNode->m_baseList->collectTypeNameNodesNotNoCode(typeNameNodes);
-		size_t baseCount = typeNameNodes.size();
+		std::vector<std::pair<TokenNode*, BaseClassNode*>> baseClassNodes;
+		classNode->m_baseList->collectBaseClassNodesNotNoCode(baseClassNodes);
+		size_t baseCount = baseClassNodes.size();
 		if (baseCount)
 		{
 			assert(0 != classNode->m_colon);
@@ -387,12 +389,12 @@ void HeaderFileGenerator::generateCode_Class(FILE* file, ClassNode* classNode, i
 			writeSpaceToFile(file);
 			for(size_t i = 0; i < baseCount; ++i)
 			{
-				if(typeNameNodes[i].first && 0 != i)
+				if(baseClassNodes[i].first && 0 != i)
 				{
-					generateCode_Token(file, typeNameNodes[i].first, 0);
+					generateCode_Token(file, baseClassNodes[i].first, 0);
 				}
 				writeStringToFile("public ", file);
-				generateCode_TypeName__(file, typeNameNodes[i].second, classNode->m_enclosing, false, 0);
+				generateCode_TypeName__(file, baseClassNodes[i].second->m_typeName, classNode->m_enclosing, false, 0);
 			}
 		}
 	}
@@ -706,12 +708,12 @@ void HeaderFileGenerator::generateCode_Property(FILE* file, PropertyNode* proper
 		g_compiler.outputEmbededCodes(file, propertyNode->m_name); //¸ñÊ½
 
 	}	
-	if (propertyNode->isArray())
+	if (propertyNode->isArray() || propertyNode->isCollection())
 	{
 		writeStringToFile("\n", file);
 		generateCode_Property_Size(file, propertyNode, indentation);
 	}
-	else if (propertyNode->isCollection())
+	if (propertyNode->isCollection())
 	{
 		writeStringToFile("\n", file);
 		generateCode_Property_Iterate(file, propertyNode, indentation);

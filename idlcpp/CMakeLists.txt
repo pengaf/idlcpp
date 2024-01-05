@@ -2,6 +2,8 @@
 set(HeaderFiles
     "AttributeListNode.h"
     "AttributeNode.h"
+    "BaseClassNode.h"
+    "BaseClassListNode.h"
     "ClassNode.h"
     "CommonFuncs.h"
     "Compiler.h"
@@ -59,6 +61,8 @@ source_group("Header Files" FILES ${HeaderFiles})
 set(SourceFiles
     "AttributeListNode.cpp"
     "AttributeNode.cpp"
+    "BaseClassNode.cpp"
+    "BaseClassListNode.cpp"
     "ClassNode.cpp"
     "CommonFuncs.cpp"
     "Compiler.cpp"

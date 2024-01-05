@@ -5,6 +5,8 @@
 #include "IdentifyNode.h"
 #include "IdentifyListNode.h"
 #include "TypeNameListNode.h"
+#include "BaseClassNode.h"
+#include "BaseClassListNode.h"
 
 #include "TemplateParametersNode.h"
 #include "TemplateClassInstanceNode.h"
@@ -230,12 +232,12 @@ void ClassNode::collectOverrideMethods(std::vector<MethodNode*>& methodNodes, Te
 			}
 		}
 	}
-	std::vector<TypeNameNode*> baseTypeNameNodes;
-	m_baseList->collectTypeNameNodes(baseTypeNameNodes);
-	count = baseTypeNameNodes.size();
+	std::vector<BaseClassNode*> baseClassNodes;
+	m_baseList->collectBaseClassNodes(baseClassNodes);
+	count = baseClassNodes.size();
 	for(size_t i = 0; i < count; ++i)
 	{
-		TypeNameNode* typeNameNode = baseTypeNameNodes[i];
+		TypeNameNode* typeNameNode = baseClassNodes[i]->m_typeName;
 		TypeNode* typeNode = typeNameNode->getActualTypeNode(templateArguments);
 		if (typeNode->isTemplateClassInstance())
 		{
@@ -269,12 +271,12 @@ bool ClassNode::hasOverrideMethod(TemplateArguments* templateArguments)
 			}
 		}
 	}
-	std::vector<TypeNameNode*> baseTypeNameNodes;
-	m_baseList->collectTypeNameNodes(baseTypeNameNodes);
-	count = baseTypeNameNodes.size();
+	std::vector<BaseClassNode*> baseClassNodes;
+	m_baseList->collectBaseClassNodes(baseClassNodes);
+	count = baseClassNodes.size();
 	for(size_t i = 0; i < count; ++i)
 	{
-		TypeNameNode* typeNameNode = baseTypeNameNodes[i];
+		TypeNameNode* typeNameNode = baseClassNodes[i]->m_typeName;
 		TypeNode* typeNode = typeNameNode->getActualTypeNode(templateArguments);
 		if (typeNode->isTemplateClassInstance())
 		{
@@ -397,13 +399,13 @@ void ClassNode::checkTypeNames(TypeNode* enclosingTypeNode, TemplateArguments* t
 		assert(0 == templateArguments);
 		templateArguments = &m_templateArguments;
 	}
-	std::vector<TypeNameNode*> baseTypeNameNodes;
-	m_baseList->collectTypeNameNodes(baseTypeNameNodes);
+	std::vector<BaseClassNode*> baseClassNodes;
+	m_baseList->collectBaseClassNodes(baseClassNodes);
 	std::vector<TypeNode*> baseTypeNodes;
-	size_t baseCount = baseTypeNameNodes.size();
+	size_t baseCount = baseClassNodes.size();
 	for (size_t i = 0; i < baseCount; ++i)
 	{
-		TypeNameNode* typeNameNode = baseTypeNameNodes[i];
+		TypeNameNode* typeNameNode = baseClassNodes[i]->m_typeName;
 		typeNameNode->calcTypeNodes(enclosingTypeNode, templateArguments);
 	}
 	m_memberList->checkTypeNames(m_typeNode, templateArguments);
@@ -422,13 +424,13 @@ void ClassNode::checkSemantic(TemplateArguments* templateArguments)
 		}
 	}
 	assert(m_typeNode && m_typeNode->m_enclosing);
-	std::vector<TypeNameNode*> baseTypeNameNodes;
-	m_baseList->collectTypeNameNodes(baseTypeNameNodes);
+	std::vector<BaseClassNode*> baseClassNodes;
+	m_baseList->collectBaseClassNodes(baseClassNodes);
 	std::vector<TypeNode*> baseTypeNodes;
-	size_t baseCount = baseTypeNameNodes.size();
+	size_t baseCount = baseClassNodes.size();
 	for (size_t i = 0; i < baseCount; ++i)
 	{
-		TypeNameNode* typeNameNode = baseTypeNameNodes[i];
+		TypeNameNode* typeNameNode = baseClassNodes[i]->m_typeName;
 		TypeNode* typeNode = typeNameNode->getTypeNode(templateArguments);
 		if (0 != typeNode)
 		{

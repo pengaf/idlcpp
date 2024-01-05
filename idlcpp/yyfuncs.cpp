@@ -30,6 +30,8 @@
 #include "OperatorNode.h"
 #include "TokenListNode.h"
 #include "MemberListNode.h"
+#include "BaseClassNode.h"
+#include "BaseClassListNode.h"
 #include "ClassNode.h"
 #include "EnumNode.h"
 #include "TypedefNode.h"
@@ -225,14 +227,14 @@ SyntaxNode* newTypeNameList(SyntaxNode* typeNameList, SyntaxNode* delimiter, Syn
 	return res;
 }
 
-void setTypeNameFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode)
-{
-	assert(snt_type_name == syntaxNode->m_nodeType);
-	assert(snt_keyword_nocode == filterNode->m_nodeType
-		|| snt_keyword_nometa == filterNode->m_nodeType);
-
-	((TypeNameNode*)syntaxNode)->m_filterNode = (TokenNode*)filterNode;
-}
+//void setTypeNameFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode)
+//{
+//	assert(snt_type_name == syntaxNode->m_nodeType);
+//	assert(snt_keyword_nocode == filterNode->m_nodeType
+//		|| snt_keyword_nometa == filterNode->m_nodeType);
+//
+//	((TypeNameNode*)syntaxNode)->m_filterNode = (TokenNode*)filterNode;
+//}
 
 void setMemberFilter(SyntaxNode* syntaxNode, SyntaxNode* filterNode)
 {
@@ -489,13 +491,35 @@ SyntaxNode* newClass(SyntaxNode* keyword, SyntaxNode* category, SyntaxNode* name
 	return res;	
 }
 
+SyntaxNode* newBaseClass(SyntaxNode* typeName, SyntaxNode* filterNode)
+{
+	assert(snt_type_name == typeName->m_nodeType);
+	assert(0 == filterNode || snt_keyword_nocode == filterNode->m_nodeType
+		|| snt_keyword_nometa == filterNode->m_nodeType);
+
+	BaseClassNode* res = new BaseClassNode((TypeNameNode*)typeName, (TokenNode*)filterNode);
+	g_syntaxNodes.push_back(res);
+	return res;
+}
+
+SyntaxNode* newBaseClassList(SyntaxNode* baseClassList, SyntaxNode* delimiter, SyntaxNode* baseClass)
+{
+	assert(0 == baseClassList || snt_base_class_list == baseClassList->m_nodeType);
+	assert(0 == delimiter || ',' == delimiter->m_nodeType);
+	assert((0 == delimiter && 0 == baseClassList) || (0 != delimiter && 0 != baseClassList));
+	assert(snt_base_class == baseClass->m_nodeType);
+	BaseClassListNode* res = new BaseClassListNode((BaseClassListNode*)baseClassList, (TokenNode*)delimiter, (BaseClassNode*)baseClass);
+	g_syntaxNodes.push_back(res);
+	return res;
+}
+
 void setClassBaseList(SyntaxNode* cls, SyntaxNode* colon, SyntaxNode* baseList)
 {
 	assert(snt_class == cls->m_nodeType);
 	assert(0 == colon || ':' == colon->m_nodeType);
-	assert(0 == baseList || snt_type_name_list == baseList->m_nodeType);
+	assert(0 == baseList || snt_base_class_list == baseList->m_nodeType);
 	((ClassNode*)cls)->m_colon = (TokenNode*)colon;
-	((ClassNode*)cls)->m_baseList = (TypeNameListNode*)baseList;
+	((ClassNode*)cls)->m_baseList = (BaseClassListNode*)baseList;
 }
 
 void setClassMemberList(SyntaxNode* cls, SyntaxNode* leftBrace, SyntaxNode* memberList, SyntaxNode* rightBrace)

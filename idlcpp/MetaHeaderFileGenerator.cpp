@@ -223,7 +223,7 @@ void writeMetaPropertyDecl(ClassNode* classNode, PropertyNode* propertyNode, FIL
 		sprintf_s(funcName, "%s_set_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
 		writeMetaPropertyDeclSet(funcName, propertyNode->isStatic(), propertyNode->getCategory(), file, indentation + 1);
 	}
-	if(propertyNode->isArray())
+	if(propertyNode->isArray() || propertyNode->isCollection())
 	{
 		sprintf_s(funcName, "%s_size_%s", classNode->m_name->m_str.c_str(), propertyNode->m_name->m_str.c_str());
 		writeStringToFile(g_metaPropertyDeclPrefix, file, indentation + 1);
@@ -237,7 +237,7 @@ void writeMetaPropertyDecl(ClassNode* classNode, PropertyNode* propertyNode, FIL
 			writeStringToFile(g_metaArrayPropertySizeDeclPostfix, file);
 		}
 	}
-	else if (propertyNode->isCollection())
+	if (propertyNode->isCollection())
 	{
 		if (propertyNode->isStatic())
 		{

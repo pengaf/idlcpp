@@ -5,11 +5,10 @@
 
 struct TokenNode;
 struct IdentifyListNode;
-struct TypeNameListNode;
 struct MemberListNode;
 struct MethodNode;
 struct TemplateParametersNode;
-struct TypeNameListNode;
+struct BaseClassListNode;
 struct TemplateArguments;
 struct ClassTypeNode;
 
@@ -23,10 +22,9 @@ struct ClassNode : ScopeNode
 	};
 	TokenNode* m_modifier;
 	TokenNode* m_keyword;
-	//IdentifyListNode* m_conceptList;
 	IdentifyNode* m_category;
 	TokenNode* m_colon;
-	TypeNameListNode* m_baseList;
+	BaseClassListNode* m_baseList;
 	TokenNode* m_leftBrace;
 	TokenNode* m_rightBrace;
 	TokenNode* m_semicolon;
